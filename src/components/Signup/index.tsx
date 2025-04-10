@@ -64,13 +64,15 @@ export function SignupForm({
   async function onSubmit(data: z.infer<typeof FormSchema>) {
     setError(null);
 
-    const res = await signup(data);
-    if (res?.ok) {
-      localStorage.setItem("userID", res.data.usuarioId);
+    try {
+      const res = await signup(data);
+      if (res?.ok && res.data.usuarioId) {
+        localStorage.setItem("userID", res.data.usuarioId);
 
-      router.push("/verificar");
-    } else {
-      setError("Error al crear la cuenta");
+        router.push("/verificar");
+      }
+    } catch (error) {
+      console.log("Error al crear la cuenta: ", error);
     }
   }
 
