@@ -1,7 +1,7 @@
 "use client";
 
 import { z } from "zod";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { cn } from "@/lib/utils";
@@ -24,10 +24,10 @@ import {
 } from "@/components/ui/form";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { signin } from "@/lib/data";
 
 const FormSchema = z.object({
   email: z.string().email({ message: "Correo inválido" }),
-  password: z.string().min(1, { message: "Contraseña inválida" }),
 });
 
 export function LoginForm({
@@ -41,14 +41,21 @@ export function LoginForm({
     resolver: zodResolver(FormSchema),
     defaultValues: {
       email: "",
-      password: "",
     },
   });
 
   async function onSubmit(data: z.infer<typeof FormSchema>) {
     setError(null);
 
-    // TODO: Implement login functionality
+    const res = await signin({
+      email: data.email,
+    });
+
+    if (res.ok) {
+      router.push("/verificar");
+    } else {
+      alert("Error al iniciar sesión");
+    }
   }
 
   return (
@@ -81,7 +88,7 @@ export function LoginForm({
                       <FormLabel>Correo</FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="tu@correo.com"
+                          placeholder="nombre@alumno.ipn.mx"
                           type="email"
                           {...field}
                         />

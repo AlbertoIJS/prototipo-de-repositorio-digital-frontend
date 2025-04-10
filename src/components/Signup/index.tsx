@@ -13,6 +13,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { signup } from "@/lib/data";
 import {
   Form,
   FormControl,
@@ -23,15 +24,19 @@ import {
 } from "@/components/ui/form";
 import Link from "next/link";
 import z from "zod";
+import { useRouter } from "next/navigation";
 
 const FormSchema = z.object({
   email: z.string().email({ message: "Correo inválido" }),
   name: z
     .string()
     .min(10, { message: "El nombre debe tener al menos 10 caracteres" }),
-  lastName: z
-    .string()
-    .min(10, { message: "El nombre debe tener al menos 10 caracteres" }),
+  paternalLastName: z.string().min(3, {
+    message: "El apellido paterno debe tener al menos 3 caracteres",
+  }),
+  maternalLastName: z.string().min(3, {
+    message: "El apellido materno debe tener al menos 3 caracteres",
+  }),
   studentId: z
     .string()
     .min(6, { message: "La boleta debe tener al menos 10 números" }),
@@ -49,14 +54,24 @@ export function SignupForm({
       email: "",
       studentId: "",
       name: "",
-      lastName: "",
+      paternalLastName: "",
+      maternalLastName: "",
     },
   });
+
+  const router = useRouter();
 
   async function onSubmit(data: z.infer<typeof FormSchema>) {
     setError(null);
 
-    // TODO: Implement signup functionality
+    const res = await signup(data);
+    if (res?.ok) {
+      localStorage.setItem("userID", res.data.usuarioId);
+
+      router.push("/verificar");
+    } else {
+      setError("Error al crear la cuenta");
+    }
   }
 
   return (
@@ -126,10 +141,10 @@ export function SignupForm({
 
               <FormField
                 control={form.control}
-                name="lastName"
+                name="paternalLastName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Apellidos</FormLabel>
+                    <FormLabel>Apellido Paterno</FormLabel>
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
@@ -138,7 +153,21 @@ export function SignupForm({
                 )}
               />
 
-              <Button type="submit" className="w-full">
+              <FormField
+                control={form.control}
+                name="maternalLastName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Apellido Materno</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <Button type="submit" className="w-full cursor-pointer">
                 Registrarme
               </Button>
 
