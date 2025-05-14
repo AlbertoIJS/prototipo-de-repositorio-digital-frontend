@@ -1,3 +1,5 @@
+import { Tag } from "./types";
+
 export async function signup({
   email,
   name,
@@ -13,7 +15,7 @@ export async function signup({
 }) {
   try {
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/usuarios/signup`,
+      `${process.env.NEXT_PUBLIC_API_URL_USERS}/usuarios/signup`,
       {
         method: "POST",
         headers: {
@@ -53,7 +55,7 @@ export async function verifyCode({
 }) {
   try {
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/usuarios/verifyCode`,
+      `${process.env.NEXT_PUBLIC_API_URL_USERS}/usuarios/verifyCode`,
       {
         method: "POST",
         headers: {
@@ -90,7 +92,7 @@ export async function verifyCode({
 export async function signin({ email }: { email: string }) {
   try {
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/usuarios/signin`,
+      `${process.env.NEXT_PUBLIC_API_URL_USERS}/usuarios/signin`,
       {
         method: "POST",
         headers: {
@@ -99,19 +101,17 @@ export async function signin({ email }: { email: string }) {
         body: JSON.stringify({ email }),
       }
     );
-    try {
-      const data = await res.json();
-      if (res.ok) {
-        return {
-          ok: true,
-          data,
-        };
-      }
-    } catch (error) {
-      console.error("Error parsing JSON:", error);
+
+    const data = await res.text();
+    if (res.ok) {
+      return {
+        ok: true,
+        data,
+      };
+    } else {
       return {
         ok: false,
-        error: "Error parsing JSON",
+        data,
       };
     }
   } catch (error) {
@@ -121,9 +121,22 @@ export async function signin({ email }: { email: string }) {
       error: "Network error",
     };
   }
-  
+
   return {
     ok: false,
     error: "Unknown error",
   };
+}
+
+export async function fetchTags() {
+  try {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL_MATERIALS}/Tags`
+    );
+    const data = (await res.json()) as Tag[];
+    return data;
+  } catch (error) {
+    console.error("Error in fetchTags:", error);
+    return [];
+  }
 }

@@ -30,7 +30,7 @@ const FormSchema = z.object({
   email: z.string().email({ message: "Correo inválido" }),
   name: z
     .string()
-    .min(10, { message: "El nombre debe tener al menos 10 caracteres" }),
+    .min(10, { message: "El nombre debe tener al menos 3 caracteres" }),
   paternalLastName: z.string().min(3, {
     message: "El apellido paterno debe tener al menos 3 caracteres",
   }),
@@ -66,8 +66,8 @@ export function SignupForm({
 
     try {
       const res = await signup(data);
-      if (res?.ok && res.data.usuarioId) {
-        localStorage.setItem("userID", res.data.usuarioId);
+      if (res?.ok && res.data.id) {
+        localStorage.setItem("userID", res.data.id);
 
         router.push("/verificar");
       }

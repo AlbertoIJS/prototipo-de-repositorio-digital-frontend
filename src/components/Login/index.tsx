@@ -23,8 +23,9 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { signin } from "@/lib/data";
+import { toast } from "sonner";
+import Link from "next/link";
 
 const FormSchema = z.object({
   email: z.string().email({ message: "Correo inválido" }),
@@ -54,7 +55,7 @@ export function LoginForm({
     if (res.ok) {
       router.push("/verificar");
     } else {
-      alert("Error al iniciar sesión");
+      toast.error(res.data);
     }
   }
 
