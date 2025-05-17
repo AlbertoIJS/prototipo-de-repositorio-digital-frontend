@@ -6,6 +6,12 @@ const nextConfig: NextConfig = {
     // your project has ESLint errors.
     ignoreDuringBuilds: true,
   },
+  experimental: {
+    serverActions: {
+      allowedOrigins: ["http://158.23.160.166:8081"],
+      bodySizeLimit: "1100mb",
+    },
+  },
 };
 
 export default nextConfig;

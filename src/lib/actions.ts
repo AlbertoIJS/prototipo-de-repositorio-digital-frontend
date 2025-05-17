@@ -64,8 +64,6 @@ export async function createMaterial(prevState: State, formData: FormData): Prom
       autores: formValues.autores,
       tagIds: formValues.tagIds,
     });
-
-    console.log(datosJson);
     
     apiFormData.append("datosJson", datosJson);
     apiFormData.append("archivo", archivo);
@@ -77,6 +75,9 @@ export async function createMaterial(prevState: State, formData: FormData): Prom
         body: apiFormData,
       }
     );
+
+    const resjson = await response.json();
+    console.log(resjson);
 
     if (!response.ok) {
       throw new Error("Error al crear el material");
