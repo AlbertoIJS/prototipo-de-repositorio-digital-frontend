@@ -41,7 +41,7 @@ export function MaterialDetails({ id }: { id: string }) {
     const fetchMaterial = async () => {
       try {
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL_MATERIALS}/Materiales/${id}`
+          `${process.env.NEXT_PUBLIC_API_URL_MATERIALS}/Materiales/${id}/Detalles`
         );
         if (!response.ok) {
           throw new Error("Failed to fetch material");
@@ -130,10 +130,10 @@ export function MaterialDetails({ id }: { id: string }) {
               </div>
             </div>
 
-            {material.tipoArchivo === "PDF" && material.url && (
+            {material.tipoArchivo === "PDF" && id && (
               <div>
                 <h3 className="text-lg font-semibold mb-4">Vista previa</h3>
-                <PDFViewer base64Data={material.url} />
+                <PDFViewer materialId={id} />
               </div>
             )}
           </CardContent>
