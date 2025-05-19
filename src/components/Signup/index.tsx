@@ -66,7 +66,7 @@ export function SignupForm({
 
     try {
       const res = await signup(data);
-      if (res?.ok && res.data.id) {
+      if (res?.ok) {
         localStorage.setItem("userID", res.data.id);
 
         router.push("/verificar");

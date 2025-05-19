@@ -4,6 +4,7 @@ import { AuthCheck } from "@/components/AuthCheck";
 import { Toaster } from "sonner";
 
 import "./globals.css";
+import { Navbar } from "@/components/Navbar";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -24,8 +25,11 @@ export default function RootLayout({
   return (
     <html lang="es-MX">
       <body className={`${inter.variable} antialiased`}>
+        <Navbar />
         <Toaster richColors />
-        <AuthCheck>{children}</AuthCheck>
+        <AuthCheck>
+          <div className="min-h-svh flex flex-col">{children}</div>
+        </AuthCheck>
       </body>
     </html>
   );

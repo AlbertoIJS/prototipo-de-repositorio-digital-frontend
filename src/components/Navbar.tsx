@@ -1,4 +1,5 @@
 "use client";
+
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -11,6 +12,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { jwtDecode } from "jwt-decode";
+import Link from "next/link";
 
 export function Navbar() {
   const [email, setEmail] = useState<string | null>(null);
@@ -20,6 +22,7 @@ export function Navbar() {
     localStorage.removeItem("userID");
     localStorage.removeItem("accessToken");
     localStorage.removeItem("expiresAt");
+    router.refresh();
     router.push("/login");
   }
 
@@ -38,7 +41,9 @@ export function Navbar() {
   return (
     <nav className="w-full border-b">
       <div className="container mx-auto px-4 py-3 flex justify-between items-center">
-        <div className="text-xl font-bold">Repositorio ESCOM</div>
+        <Link href="/" className="text-xl font-bold">
+          Repositorio ESCOM
+        </Link>
         {email && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -51,10 +56,19 @@ export function Navbar() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuItem className="flex-col items-start">
-                <div className="text-sm text-muted-foreground">{email}</div>
+              <DropdownMenuItem disabled className="flex-col items-start">
+                {email}
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleSignOut} className="text-red-600">
+              <DropdownMenuItem asChild className="flex-col items-start">
+                <Link href="/favoritos">Mis favoritos</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild className="flex-col items-start">
+                <Link href="/admin/usuarios">Usuarios</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={handleSignOut}
+                className="text-red-600"
+              >
                 Cerrar sesión
               </DropdownMenuItem>
             </DropdownMenuContent>

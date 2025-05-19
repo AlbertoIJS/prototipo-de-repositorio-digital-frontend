@@ -53,6 +53,7 @@ export function LoginForm({
     });
 
     if (res.ok) {
+      localStorage.setItem("userID", res.data.id);
       router.push("/verificar");
     } else {
       toast.error(res.data);
