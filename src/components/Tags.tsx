@@ -19,6 +19,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { fetchTags } from "@/lib/data";
 import { Tag } from "@/lib/types";
+import { Label } from "@/components/ui/label";
 
 interface TagsProps {
   selectedTags: number[];
@@ -31,7 +32,7 @@ export function Tags({ selectedTags, onTagsChange, error }: TagsProps) {
   const [tags, setTags] = useState<Tag[]>([]);
 
   useEffect(() => {
-    fetchTags().then((tags) => setTags(tags));
+    fetchTags().then((tags) => setTags(tags.data));
   }, []);
 
   const selectedTagNames = tags
@@ -40,14 +41,14 @@ export function Tags({ selectedTags, onTagsChange, error }: TagsProps) {
 
   return (
     <div data-slot="form-item" className="grid gap-2">
-      <label
+      <Label
         data-slot="form-label"
         className="flex items-center gap-2 text-sm leading-none select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50 data-[error=true]:text-destructive data-[error=true]:font-medium"
         data-error={error ? "true" : "false"}
       >
         Tags
-      </label>
-      <Popover open={open} onOpenChange={setOpen}>
+      </Label>
+      <Popover open={open} onOpenChange={setOpen} modal>
         <PopoverTrigger asChild>
           <Button
             variant="outline"
@@ -65,11 +66,15 @@ export function Tags({ selectedTags, onTagsChange, error }: TagsProps) {
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-full p-0" side="bottom" align="start">
+        <PopoverContent
+          className="w-full p-0"
+          side="bottom"
+          align="start"
+        >
           <Command className="rounded-lg shadow-md">
             <CommandInput placeholder="Buscar tag..." />
             <CommandEmpty>No se encontraron tags.</CommandEmpty>
-            <CommandGroup>
+            <CommandGroup className="max-h-[300px] overflow-y-auto">
               {tags?.map((tag) => (
                 <CommandItem
                   key={tag.id}

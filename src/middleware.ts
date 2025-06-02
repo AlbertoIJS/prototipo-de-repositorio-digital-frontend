@@ -13,7 +13,7 @@ export function middleware(request: NextRequest) {
   }
 
   // Check for token in cookies (we'll add this to cookies in the AuthCheck component)
-  const token = request.cookies.get('accessToken')?.value;
+  const token = request.cookies.get('auth_token')?.value;
   
   // If user is on a public path and has a token, redirect to home
   if (isPublicPath && token) {

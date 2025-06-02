@@ -21,10 +21,12 @@ import {
 } from "@/components/ui/input-otp";
 import { verifyCode } from "@/lib/data";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { setCookie } from "@/lib/cookies";
 
 const FormSchema = z.object({
   pin: z.string().min(6, {
-    message: "Your one-time password must be 6 characters.",
+    message: "El código de verificación debe tener 6 dígitos",
   }),
 });
 
@@ -38,25 +40,50 @@ export default function InputOTPForm() {
 
   const router = useRouter();
   async function onSubmit(data: z.infer<typeof FormSchema>) {
+    console.log("=== VERIFICATION FORM SUBMITTED ===");
+    console.log("Form data:", data);
+    
     const userID = localStorage.getItem("userID");
+    console.log("Retrieved userID from localStorage:", userID);
 
     if (!userID) {
-      alert("Error al iniciar sesión. Por favor, vuelve a intentarlo.");
+      console.error("No userID found in localStorage");
+      toast.error("Error al iniciar sesión. Por favor, vuelve a intentarlo.");
       return;
     }
 
-    const res = await verifyCode({
-      code: data.pin,
-      userID,
-    });
+    try {
+      console.log("Calling verifyCode with:", { code: data.pin, userID });
+      
+      const res = await verifyCode({
+        code: data.pin,
+        userID,
+      });
 
-    if (res.ok) {
-      localStorage.setItem("accessToken", res.data.accessToken);
-      localStorage.setItem("expiresAt", res.data.expiresAt);
+      console.log("Verification response:", res);
 
-      router.push("/");
-    } else {
-      alert(`Verification failed. ${res.error}`);
+      if (res.ok) {
+        console.log("Verification successful, setting cookies...");
+        
+        // Set cookies for server-side access using utility function
+        const tokenSet = setCookie("auth_token", res.data.data.accessToken);
+        const expiresSet = setCookie("expiresAt", res.data.data.expiresAt.toString());
+        
+        if (!tokenSet) {
+          console.error("Failed to set auth_token cookie");
+          toast.error("Error al guardar la sesión. Por favor, intenta nuevamente.");
+          return;
+        }
+
+        console.log("Verification successful, redirecting to home...");
+        router.push("/");
+      } else {
+        console.error("Verification failed:", res);
+        toast.error(`Verificación fallida, intenta nuevamente`);
+      }
+    } catch (error) {
+      console.error("Error during verification:", error);
+      toast.error("Error durante la verificación. Por favor, intenta nuevamente.");
     }
   }
 

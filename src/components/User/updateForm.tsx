@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,13 @@ import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const initialState: UserState = {
   message: null,
@@ -72,9 +79,19 @@ export default function UpdateForm({ user }: { user: User }) {
             <p className="text-red-500 text-sm">{state.errors.boleta[0]}</p>
           )}
         </div>
+        {/* 1. Alumno, 2. Profesor, 3. Admin */}
         <div className="flex flex-col gap-2">
           <Label>Rol</Label>
-          <Input type="text" name="rol" defaultValue={user.rol} />
+          <Select name="rol" defaultValue={user.rol}>
+            <SelectTrigger>
+              <SelectValue placeholder="Selecciona un rol" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="1">Alumno</SelectItem>
+              <SelectItem value="2">Profesor</SelectItem>
+              <SelectItem value="3">Admin</SelectItem>
+            </SelectContent>
+          </Select>
           {state.errors?.rol && (
             <p className="text-red-500 text-sm">{state.errors.rol[0]}</p>
           )}

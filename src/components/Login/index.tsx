@@ -26,6 +26,7 @@ import { useRouter } from "next/navigation";
 import { signin } from "@/lib/data";
 import { toast } from "sonner";
 import Link from "next/link";
+import { setCookie } from "@/lib/cookies";
 
 const FormSchema = z.object({
   email: z.string().email({ message: "Correo inválido" }),
@@ -52,11 +53,24 @@ export function LoginForm({
       email: data.email,
     });
 
+    console.log(res);
+
     if (res.ok) {
-      localStorage.setItem("userID", res.data.id);
+      localStorage.setItem("userID", res.data.data.id);
+      
+      // Set cookies for server-side access using utility function
+      const tokenSet = setCookie("auth_token", res.data.data.accessToken);
+      const expiresSet = setCookie("expiresAt", res.data.data.expiresAt.toString());
+      
+      if (!tokenSet) {
+        console.error("Failed to set auth_token cookie");
+        toast.error("Error al guardar la sesión. Por favor, intenta nuevamente.");
+        return;
+      }
+        
       router.push("/verificar");
     } else {
-      toast.error(res.data);
+      toast.error("Verifica tu correo e intenta nuevamente");
     }
   }
 
@@ -81,7 +95,6 @@ export function LoginForm({
                     {error}
                   </div>
                 )}
-
                 <FormField
                   control={form.control}
                   name="email"

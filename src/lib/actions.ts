@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { cookies } from "next/headers";
+import { jwtDecode } from "jwt-decode";
 
 export type State = {
   errors?: {
@@ -10,6 +12,8 @@ export type State = {
     autores?: string[];
     tagIds?: string[];
     archivo?: string[];
+    url?: string[];
+    materialType?: string[];
   };
   message: string | null;
   status?: number;
@@ -31,7 +35,8 @@ export type UserState = {
 
 const AutorSchema = z.object({
   nombre: z.string().min(1, "El nombre es requerido"),
-  apellido: z.string().min(1, "El apellido es requerido"),
+  apellidoP: z.string().min(1, "El apellido paterno es requerido"),
+  apellidoM: z.string().min(1, "El apellido materno es requerido"),
   email: z.string().email("Email inválido"),
 });
 
@@ -39,20 +44,71 @@ const MaterialSchema = z.object({
   nombreMaterial: z.string().min(1, "El nombre del material es requerido"),
   autores: z.array(AutorSchema).min(1, "Se requiere al menos un autor"),
   tagIds: z.array(z.number()).min(1, "Se requiere al menos un tag"),
+  materialType: z.enum(["file", "url"], {
+    required_error: "Debe seleccionar el tipo de material",
+  }),
 });
 
 export async function createMaterial(
   prevState: State,
   formData: FormData
 ): Promise<State> {
-  // Get the file from FormData
+  // Get user ID from JWT token
+  const cookieStore = await cookies();
+  const token = cookieStore.get("auth_token")?.value;
+  
+  if (!token) {
+    return {
+      message: "Error: No se encontró token de autenticación",
+      status: 401,
+    };
+  }
+
+  const userID = jwtDecode(token).sub;
+
+  const materialType = formData.get("materialType") as string;
   const archivo = formData.get("archivo") as File;
-  if (!archivo) {
+  const url = formData.get("url") as string;
+
+  // Validate that either file or URL is provided based on materialType
+  if (materialType === "file") {
+    if (!archivo || archivo.size === 0) {
+      return {
+        errors: {
+          archivo: ["Se requiere un archivo"],
+        },
+        message: "Error: Se requiere un archivo",
+        status: 400,
+      };
+    }
+  } else if (materialType === "url") {
+    if (!url || url.trim() === "") {
+      return {
+        errors: {
+          url: ["Se requiere una URL"],
+        },
+        message: "Error: Se requiere una URL",
+        status: 400,
+      };
+    }
+    // Basic URL validation
+    try {
+      new URL(url);
+    } catch {
+      return {
+        errors: {
+          url: ["La URL no es válida"],
+        },
+        message: "Error: La URL no es válida",
+        status: 400,
+      };
+    }
+  } else {
     return {
       errors: {
-        archivo: ["Se requiere un archivo"],
+        materialType: ["Debe seleccionar el tipo de material"],
       },
-      message: "Error: Se requiere un archivo",
+      message: "Error: Debe seleccionar el tipo de material",
       status: 400,
     };
   }
@@ -61,6 +117,7 @@ export async function createMaterial(
     nombreMaterial: formData.get("nombreMaterial"),
     autores: JSON.parse((formData.get("autores") as string) || "[]"),
     tagIds: JSON.parse((formData.get("tagIds") as string) || "[]"),
+    materialType: materialType,
   };
 
   const validateFields = MaterialSchema.safeParse(formValues);
@@ -85,10 +142,19 @@ export async function createMaterial(
     });
 
     apiFormData.append("datosJson", datosJson);
-    apiFormData.append("archivo", archivo);
+    
+    // Add either file or URL based on materialType
+    if (materialType === "file") {
+      apiFormData.append("archivo", archivo);
+      apiFormData.append("Url", ""); // Empty URL when using file
+    } else {
+      apiFormData.append("Url", url);
+      // Create an empty file when using URL
+      apiFormData.append("archivo", new File([], "", { type: "application/octet-stream" }));
+    }
 
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL_MATERIALS}/Materiales/Upload`,
+      `${process.env.NEXT_PUBLIC_API_URL}/Materiales/Upload?userId=${userID}`,
       {
         method: "POST",
         body: apiFormData,
@@ -114,11 +180,152 @@ export async function createMaterial(
   }
 }
 
+export async function updateMaterial(
+  materialId: string,
+  prevState: State,
+  formData: FormData
+): Promise<State> {
+  // Get user ID from JWT token
+  const cookieStore = await cookies();
+  const token = cookieStore.get("auth_token")?.value;
+  
+  if (!token) {
+    return {
+      message: "Error: No se encontró token de autenticación",
+      status: 401,
+    };
+  }
+
+  const userID = jwtDecode(token).sub;
+
+  const materialType = formData.get("materialType") as string;
+  const archivo = formData.get("archivo") as File;
+  const url = formData.get("url") as string;
+
+  // For updates, file is optional if material type is file (existing file can be kept)
+  if (materialType === "file" && archivo && archivo.size > 0) {
+    // Validate file if a new one is provided
+    if (archivo.type !== "application/pdf" && archivo.type !== "application/zip") {
+      return {
+        errors: {
+          archivo: ["Solo se permiten archivos PDF y ZIP"],
+        },
+        message: "Error: Formato de archivo no válido",
+        status: 400,
+      };
+    }
+  } else if (materialType === "url") {
+    if (!url || url.trim() === "") {
+      return {
+        errors: {
+          url: ["Se requiere una URL"],
+        },
+        message: "Error: Se requiere una URL",
+        status: 400,
+      };
+    }
+    // Basic URL validation
+    try {
+      new URL(url);
+    } catch {
+      return {
+        errors: {
+          url: ["La URL no es válida"],
+        },
+        message: "Error: La URL no es válida",
+        status: 400,
+      };
+    }
+  } else {
+    return {
+      errors: {
+        materialType: ["Debe seleccionar el tipo de material"],
+      },
+      message: "Error: Debe seleccionar el tipo de material",
+      status: 400,
+    };
+  }
+
+  const formValues = {
+    nombreMaterial: formData.get("nombreMaterial"),
+    autores: JSON.parse((formData.get("autores") as string) || "[]"),
+    tagIds: JSON.parse((formData.get("tagIds") as string) || "[]"),
+    materialType: materialType,
+  };
+
+  const validateFields = MaterialSchema.safeParse(formValues);
+
+  if (!validateFields.success) {
+    return {
+      errors: validateFields.error.flatten().fieldErrors,
+      message: "Error en los campos. No se pudo actualizar el material.",
+      status: 400,
+    };
+  }
+
+  try {
+    // Create a new FormData instance for the API call
+    const apiFormData = new FormData();
+
+    // Add the datosJson field with the stringified data
+    const datosJson = JSON.stringify({
+      nombreMaterial: formValues.nombreMaterial,
+      autores: formValues.autores,
+      tagIds: formValues.tagIds,
+    });
+
+    apiFormData.append("datosJson", datosJson);
+    
+    // Add either file or URL based on materialType
+    if (materialType === "file") {
+      if (archivo && archivo.size > 0) {
+        apiFormData.append("nuevoArchivo", archivo);
+      } else {
+        // Create an empty file to maintain the existing file
+        apiFormData.append("nuevoArchivo", new File([], "", { type: "application/octet-stream" }));
+      }
+      apiFormData.append("nuevaUrl", ""); // Empty URL when using file
+    } else {
+      apiFormData.append("nuevaUrl", url);
+      // Create an empty file when using URL
+      apiFormData.append("nuevoArchivo", new File([], "", { type: "application/octet-stream" }));
+    }
+
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/Materiales/${materialId}?id=${userID}`,
+      {
+        method: "PUT",
+        body: apiFormData,
+      }
+    );
+
+    const resjson = await response.json();
+    console.log(resjson);
+
+    if (!response.ok) {
+      throw new Error("Error al actualizar el material");
+    }
+
+    revalidatePath(`/material/${materialId}`);
+    revalidatePath("/mis-materiales");
+
+    return {
+      message: "Material actualizado exitosamente",
+      status: response.status,
+    };
+  } catch (error) {
+    return {
+      message: "Error al actualizar el material",
+      status: 500,
+    };
+  }
+}
+
 export async function addToFavorites(userId: string, materialId: number) {
   const userID = Number(userId);
   try {
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL_MATERIALS}/Favoritos/Agregar`,
+      `${process.env.NEXT_PUBLIC_API_URL}/Favoritos/Agregar`,
       {
         headers: {
           "Content-Type": "application/json",
@@ -127,9 +334,12 @@ export async function addToFavorites(userId: string, materialId: number) {
         body: JSON.stringify({ userId: userID, materialId }),
       }
     );
+
     if (!response.ok) {
       throw new Error("Error al agregar a favoritos");
     }
+
+    revalidatePath(`/material/${materialId}`);
     return {
       message: "Material agregado a favoritos",
       status: response.status,
@@ -182,7 +392,7 @@ export async function updateUser(
 
   try {
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL_USERS}/usuarios/${formValues.userID}`,
+      `${process.env.NEXT_PUBLIC_API_URL}/usuarios/${formValues.userID}`,
       {
         method: "PUT",
         body: JSON.stringify({
@@ -222,7 +432,7 @@ export async function removeFromFavorites(userId: string, materialId: number) {
   const userID = Number(userId);
   try {
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL_MATERIALS}/Favoritos/${userID}/${materialId}`,
+      `${process.env.NEXT_PUBLIC_API_URL}/Favoritos/${userID}/${materialId}`,
       {
         method: "DELETE",
       }
@@ -231,7 +441,8 @@ export async function removeFromFavorites(userId: string, materialId: number) {
       throw new Error("Error al remover de favoritos");
     }
 
-    revalidatePath("/favoritos");
+    revalidatePath(`/material/${materialId}`);
+    revalidatePath(`/favoritos`);
     return {
       message: "Material removido de favoritos",
       status: response.status,
@@ -239,6 +450,38 @@ export async function removeFromFavorites(userId: string, materialId: number) {
   } catch (error) {
     return {
       message: "Error al remover de favoritos",
+      status: 500,
+    };
+  }
+}
+
+export async function updateMaterialAvailability(materialId: string, disponible: number) {
+  try {
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/Materiales/disponibilidad?materialId=${materialId}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ disponible }),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error("Error al actualizar la disponibilidad del material");
+    }
+
+    revalidatePath(`/material/${materialId}`);
+    revalidatePath("/mis-materiales");
+    
+    return {
+      message: disponible === 1 ? "Material marcado como disponible" : "Material marcado como no disponible",
+      status: response.status,
+    };
+  } catch (error) {
+    return {
+      message: "Error al actualizar la disponibilidad del material",
       status: 500,
     };
   }

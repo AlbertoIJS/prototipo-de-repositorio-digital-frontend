@@ -19,7 +19,7 @@ export async function signup({
 }) {
   try {
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL_USERS}/usuarios/signup`,
+      `${process.env.NEXT_PUBLIC_API_URL}/usuarios/signup`,
       {
         method: "POST",
         headers: {
@@ -59,7 +59,7 @@ export async function verifyCode({
 }) {
   try {
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL_USERS}/usuarios/verifyCode`,
+      `${process.env.NEXT_PUBLIC_API_URL}/usuarios/verifyCode`,
       {
         method: "POST",
         headers: {
@@ -96,7 +96,7 @@ export async function verifyCode({
 export async function signin({ email }: { email: string }) {
   try {
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL_USERS}/usuarios/signin`,
+      `${process.env.NEXT_PUBLIC_API_URL}/usuarios/signin`,
       {
         method: "POST",
         headers: {
@@ -135,12 +135,29 @@ export async function signin({ email }: { email: string }) {
 export async function fetchTags() {
   try {
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL_MATERIALS}/Tags`
+      `${process.env.NEXT_PUBLIC_API_URL}/Tags`
     );
-    const data = (await res.json()) as Tag[];
+    const data = await res.json();
     return data;
   } catch (error) {
     console.error("Error in fetchTags:", error);
+    return { data: [] };
+  }
+}
+
+export async function fetchMaterialsByAuthor() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("auth_token")?.value;
+  const userID = jwtDecode(token as string).sub;
+
+  try {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/Materiales/PorCreador/${userID}`
+    );
+    const data = await res.json();
+    return data;
+  } catch (error) {
+    console.error("Error in fetchMaterialsByAuthor:", error);
     return [];
   }
 }
@@ -148,7 +165,7 @@ export async function fetchTags() {
 export async function fetchMaterials(userID: string) {
   try {
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL_MATERIALS}/Materiales?userId=${userID}`
+      `${process.env.NEXT_PUBLIC_API_URL}/Materiales?userId=${userID}`
     );
     const data = await res.json();
     return data;
@@ -160,7 +177,7 @@ export async function fetchMaterials(userID: string) {
 
 export async function fetchMaterial(id: string) {
   const cookieStore = await cookies();
-  const token = cookieStore.get("accessToken")?.value;
+  const token = cookieStore.get("auth_token")?.value;
   const userID = jwtDecode(token as string).sub;
 
   if (!token) {
@@ -172,7 +189,7 @@ export async function fetchMaterial(id: string) {
 
   try {
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL_MATERIALS}/Materiales/${id}/Detalles?userId=${userID}&id=${id}`
+      `${process.env.NEXT_PUBLIC_API_URL}/Materiales/${id}/Detalles?userId=${userID}&id=${id}`
     );
     if (!response.ok) {
       throw new Error("Failed to fetch material");
@@ -188,7 +205,7 @@ export async function fetchMaterial(id: string) {
 export async function fetchFavorites(userID: string | undefined) {
   try {
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL_MATERIALS}/Favoritos/${userID}`
+      `${process.env.NEXT_PUBLIC_API_URL}/Favoritos/${userID}`
     );
     const data = await res.json();
     return data;
@@ -201,7 +218,7 @@ export async function fetchFavorites(userID: string | undefined) {
 export async function fetchUser(id: string) {
   try {
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL_USERS}/usuarios/${id}`
+      `${process.env.NEXT_PUBLIC_API_URL}/usuarios/${id}`
     );
     if (!res.ok) {
       throw new Error("Failed to fetch user");
@@ -217,7 +234,7 @@ export async function fetchUser(id: string) {
 export async function fetchUsers() {
   try {
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL_USERS}/usuarios`
+      `${process.env.NEXT_PUBLIC_API_URL}/usuarios`
     );
     const data = await res.json();
     return data;
@@ -230,7 +247,7 @@ export async function fetchUsers() {
 export async function deleteUser(userID: string | number) {
   try {
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL_USERS}/usuarios/${userID}`,
+      `${process.env.NEXT_PUBLIC_API_URL}/usuarios/${userID}`,
       {
         method: "DELETE",
       }

@@ -3,9 +3,10 @@
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { jwtDecode } from 'jwt-decode';
-import { setCookie, deleteCookie } from 'cookies-next';
+import { getCookie, deleteCookie } from '@/lib/cookies';
 
 interface JWTPayload {
+  sub: string;
   email: string;
   // Add other JWT fields as needed
 }
@@ -27,17 +28,17 @@ export function AuthCheck({ children }: { children: React.ReactNode }) {
 
     const checkAuth = () => {
       try {
-        const token = localStorage.getItem('accessToken');
+        console.log("=== AUTH CHECK STARTED ===");
+        console.log("Current pathname:", pathname);
+        console.log("Is public path:", isPublicPath);
         
-        // Sync token to cookies for middleware
-        if (token) {
-          setCookie('accessToken', token);
-        } else {
-          deleteCookie('accessToken');
-        }
+        // Get token from cookies (our new approach)
+        const token = getCookie('auth_token');
+        console.log("Token from cookies:", token ? "EXISTS" : "NOT_FOUND");
         
         if (!isPublicPath && !token) {
           // Redirect to login if not on a public path and no token exists
+          console.log("No token found, redirecting to login");
           if (pathname !== '/login') { // Avoid redirect loop
             router.push('/login');
             return;
@@ -47,22 +48,33 @@ export function AuthCheck({ children }: { children: React.ReactNode }) {
         if (!isPublicPath && token) {
           // If user is on a protected route with a token, verify it
           try {
+            console.log("Verifying token...");
             const decoded = jwtDecode<JWTPayload>(token);
-            if (!decoded || !decoded.email) {
-              localStorage.removeItem('accessToken');
-              deleteCookie('accessToken');
+            console.log("Decoded token:", { sub: decoded.sub, email: decoded.email });
+            
+            if (!decoded || !decoded.sub) {
+              console.log("Invalid token structure, removing and redirecting");
+              deleteCookie('auth_token');
+              deleteCookie('expiresAt');
+              // Also clean up localStorage for backwards compatibility
+              localStorage.removeItem('userID');
               router.push('/login');
               return;
             }
+            console.log("Token is valid");
           } catch (error) {
             // Invalid token
-            localStorage.removeItem('accessToken');
-            deleteCookie('accessToken');
+            console.error("Token decode error:", error);
+            deleteCookie('auth_token');
+            deleteCookie('expiresAt');
+            // Also clean up localStorage for backwards compatibility
+            localStorage.removeItem('userID');
             router.push('/login');
             return;
           }
         }
         
+        console.log("Auth check completed successfully");
         setIsLoading(false);
       } catch (error) {
         console.error('Auth check error:', error);
@@ -71,6 +83,20 @@ export function AuthCheck({ children }: { children: React.ReactNode }) {
     };
 
     checkAuth();
+    
+    // Listen for storage events to handle login/logout in other tabs
+    const handleStorageChange = () => {
+      console.log("Storage change detected, rechecking auth");
+      checkAuth();
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('localStorageUpdate', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('localStorageUpdate', handleStorageChange);
+    };
   }, [router, isPublicPath, pathname]);
 
   // Show nothing while checking authentication

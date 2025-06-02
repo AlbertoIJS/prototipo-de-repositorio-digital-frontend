@@ -8,7 +8,7 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     serverActions: {
-      allowedOrigins: ["http://158.23.160.166:8081"],
+      allowedOrigins: ["https://aij.lat"],
       bodySizeLimit: "1100mb",
     },
   },

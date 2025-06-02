@@ -5,8 +5,8 @@ export function MaterialViewer({
   userID,
 }: PDFViewerProps) {
   const src =
-    materialType === "PDF"
-      ? `${process.env.NEXT_PUBLIC_API_URL_MATERIALS}/Materiales/${materialId}?userId=${userID}`
+    materialType === "PDF" || materialType === "LINK"
+      ? `${process.env.NEXT_PUBLIC_API_URL}/Materiales/Visualizar/${materialId}?userId=${userID}`
       : materialUrl;
 
   return (

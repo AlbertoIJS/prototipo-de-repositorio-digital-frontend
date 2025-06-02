@@ -14,5 +14,5 @@ export default async function UserPage({
     notFound();
   }
 
-  return <UpdateForm user={user} />;
+  return <UpdateForm user={user.data} />;
 }

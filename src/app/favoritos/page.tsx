@@ -5,7 +5,7 @@ import MaterialsGrid from "@/components/MaterialsGrid";
 
 export default async function FavoritosPage() {
   const cookieStore = await cookies();
-  const token = cookieStore.get("accessToken")?.value;
+  const token = cookieStore.get("auth_token")?.value;
   const userID = jwtDecode(token as string).sub;
 
   if (!userID) {
@@ -20,7 +20,7 @@ export default async function FavoritosPage() {
       {favorites.length === 0 ? (
         <p className="text-muted-foreground mt-4">Aún no tienes favoritos</p>
       ) : (
-        <MaterialsGrid userID={userID} materials={favorites} />
+        <MaterialsGrid userID={userID} materials={favorites.data} />
       )}
     </main>
   );

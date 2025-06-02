@@ -13,10 +13,11 @@ export default async function MaterialPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const material = (await fetchMaterial(id)) as Material;
+  const res = await fetchMaterial(id);
+  const material = res.data as Material;
 
   const cookieStore = await cookies();
-  const token = cookieStore.get("accessToken")?.value;
+  const token = cookieStore.get("auth_token")?.value;
   const userID = jwtDecode(token as string).sub;
 
   if (!userID) {
@@ -29,7 +30,11 @@ export default async function MaterialPage({
         <CardHeader>
           <CardTitle className="text-2xl flex items-center gap-2 justify-between">
             {material.nombre}
-            <BookmarkButton userID={userID} materialId={material.id} />
+            <BookmarkButton
+              userID={userID}
+              materialId={material.id}
+              isFavorite={material.favorito}
+            />
           </CardTitle>
           <div className="flex flex-wrap gap-2 mt-2">
             {material.tags.map((tag) => (
@@ -45,7 +50,7 @@ export default async function MaterialPage({
             <div className="space-y-2">
               {material.autores.map((autor) => (
                 <div key={autor.id} className="text-sm">
-                  {autor.nombre} {autor.apellido} - {autor.email}
+                  {autor.nombre} {autor.apellidoP} {autor.apellidoM} - {autor.email}
                 </div>
               ))}
             </div>
@@ -80,7 +85,8 @@ export default async function MaterialPage({
 interface Author {
   id: number;
   nombre: string;
-  apellido: string;
+  apellidoP: string;
+  apellidoM: string;
   email: string;
   fechaCreacion: string;
   fechaActualizacion: string;
@@ -95,6 +101,7 @@ interface Material {
   id: number;
   nombre: string;
   url: string;
+  favorito: boolean;
   tipoArchivo: string;
   fechaCreacion: string;
   fechaActualizacion: string;

@@ -8,12 +8,21 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { fetchUsers } from "@/lib/data";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil } from "lucide-react";
 import DeleteUser from "@/components/DeleteUser";
 import Link from "next/link";
 
 export default async function UsuariosPage() {
   const users = await fetchUsers();
+
+  if (users.data.length === 0) {
+    return (
+      <main className="flex-1 py-8 px-4 container mx-auto">
+        <h1 className="text-2xl font-bold mb-4">Usuarios</h1>
+        <p className="text-gray-500 text-center">Aún no hay usuarios</p>
+      </main>
+    );
+  }
 
   return (
     <main className="flex-1 py-8 px-4 container mx-auto">
@@ -32,14 +41,16 @@ export default async function UsuariosPage() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {users.map((user: User) => (
+          {users.data.map((user: User) => (
             <TableRow key={user.id}>
               <TableCell>{user.nombre}</TableCell>
               <TableCell>{user.apellidoP}</TableCell>
               <TableCell>{user.apellidoM}</TableCell>
               <TableCell className="text-right">{user.email}</TableCell>
               <TableCell className="text-right">{user.boleta}</TableCell>
-              <TableCell className="text-right">{user.rol}</TableCell>
+              <TableCell className="text-right">
+                {roles[user.rol as keyof typeof roles]}
+              </TableCell>
               <TableCell className="text-right">{user.fechaCreacion}</TableCell>
               <TableCell className="text-right flex gap-2 items-center justify-end">
                 <DeleteUser userID={user.id} />
@@ -69,3 +80,9 @@ interface User {
   fechaActualizacion: string;
   verificacionEmail: boolean;
 }
+
+const roles = {
+  "1": "Alumno",
+  "2": "Profesor",
+  "3": "Administrador",
+};
