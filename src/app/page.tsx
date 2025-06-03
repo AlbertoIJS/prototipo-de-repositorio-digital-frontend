@@ -24,11 +24,11 @@ export default async function Home() {
   Administradores: pueden ver todos los materiales siempre independientemente del status o disponible
   */
   const materials = await fetchMaterials(userID);
-  const filteredMaterials = materials.data.filter(
-    (material) => material.disponible === 1 && material.status === 1
-  );
+  // TODO: Add filter to role 1
+  // const filteredMaterials = materials.data.filter(
+  //   (material: any) => material.disponible === 1 && material.status === 1
+  // );
 
-  console.log(filteredMaterials);
   return (
     <main className="flex-1 py-8 px-4 container mx-auto">
       <h1 className="text-2xl font-bold mb-4">Más recientes</h1>

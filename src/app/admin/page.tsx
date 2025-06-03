@@ -5,14 +5,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import {
   fetchAnalyticsData,
-  fetchSystemHealth,
-  type AnalyticsData,
 } from "@/lib/analytics";
 import {
-  MaterialsStatusChart,
   UserGrowthChart,
   MaterialsByTagChart,
   MaterialsByStatusChart,
@@ -25,13 +21,9 @@ import {
   Tags,
   Heart,
   TrendingUp,
-  Activity,
   Eye,
   Clock,
   UserCheck,
-  BarChart3,
-  Settings,
-  Download,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -127,10 +119,7 @@ function QuickActions() {
 }
 
 export default async function Admin() {
-  const [analyticsData, systemHealth] = await Promise.all([
-    fetchAnalyticsData(),
-    fetchSystemHealth(),
-  ]);
+  const analyticsData = await fetchAnalyticsData();
 
   return (
     <div className="container mx-auto p-6 space-y-6">

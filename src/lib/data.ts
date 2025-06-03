@@ -1,7 +1,6 @@
 "use server";
 
 import { cookies } from "next/headers";
-import { Tag } from "./types";
 import { jwtDecode } from "jwt-decode";
 
 export async function signup({
