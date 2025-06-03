@@ -11,6 +11,7 @@ interface Material {
   nombre: string;
   url: string;
   status: number;
+  disponible?: number;
   tipoArchivo: string;
   fechaCreacion: string;
   fechaActualizacion: string;
@@ -20,10 +21,12 @@ export default async function MaterialsGrid({
   materials,
   userID,
   isEditable = false,
+  isAdmin = false,
 }: {
   materials: Material[];
   userID?: string;
   isEditable?: boolean;
+  isAdmin?: boolean;
 }) {
   if (materials.length === 0) {
     return (
@@ -42,6 +45,11 @@ export default async function MaterialsGrid({
               <span className="truncate">{material.nombre}</span>
               {isEditable && material.status === 0 && (
                 <Badge className="ml-2">Pendiente</Badge>
+              )}
+              {isAdmin && (
+                <Badge variant={material.status === 1 ? "default" : "secondary"} className="ml-2">
+                  {material.status === 1 ? "Publicado" : "Pendiente"}
+                </Badge>
               )}
             </CardTitle>
           </CardHeader>
@@ -73,7 +81,7 @@ export default async function MaterialsGrid({
                     )}
                   </div>
                 )}
-                {isEditable && material.status !== 0 && (
+                {isEditable && !isAdmin && material.status !== 0 && (
                   <Button
                     asChild
                     variant="outline"
@@ -81,6 +89,19 @@ export default async function MaterialsGrid({
                     className="w-full"
                   >
                     <Link href={`/editar-material/${material.id}`}>
+                      <Edit className="size-4 mr-2" />
+                      Editar material
+                    </Link>
+                  </Button>
+                )}
+                {isAdmin && (
+                  <Button
+                    asChild
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                  >
+                    <Link href={`/admin/editar-material/${material.id}`}>
                       <Edit className="size-4 mr-2" />
                       Editar material
                     </Link>

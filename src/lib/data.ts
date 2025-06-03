@@ -175,6 +175,23 @@ export async function fetchMaterials(userID: string) {
   }
 }
 
+export async function fetchAllMaterials() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("auth_token")?.value;
+  const userID = jwtDecode(token as string).sub;
+
+  try {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/Materiales?userId=${userID}`
+    );
+    const data = await res.json();
+    return data;
+  } catch (error) {
+    console.error("Error in fetchAllMaterials:", error);
+    return [];
+  }
+}
+
 export async function fetchMaterial(id: string) {
   const cookieStore = await cookies();
   const token = cookieStore.get("auth_token")?.value;
@@ -189,7 +206,7 @@ export async function fetchMaterial(id: string) {
 
   try {
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/Materiales/${id}/Detalles?userId=${userID}&id=${id}`
+      `${process.env.NEXT_PUBLIC_API_URL}/Materiales/${id}/Detalles?userId=${userID}`
     );
     if (!response.ok) {
       throw new Error("Failed to fetch material");

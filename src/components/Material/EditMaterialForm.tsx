@@ -17,11 +17,13 @@ interface Material {
   url: string;
   favorito: boolean;
   tipoArchivo: string;
+  disponible: number;
+  status: number;
+  creadoPor?: any;
   fechaCreacion: string;
   fechaActualizacion: string;
   autores: Author[];
   tags: Tag[];
-  status: number;
 }
 
 interface Author {
@@ -44,11 +46,13 @@ interface Tag {
 interface EditMaterialFormProps {
   material: Material;
   materialId: string;
+  isAdmin?: boolean;
 }
 
 export default function EditMaterialForm({
   material,
   materialId,
+  isAdmin = false,
 }: EditMaterialFormProps) {
   const router = useRouter();
   const initialState: State = {
@@ -93,12 +97,16 @@ export default function EditMaterialForm({
   // Redirect when update is successful
   useEffect(() => {
     if (state.status === 200) {
-      // Redirect to material page after a brief delay to show success message
+      // Redirect to appropriate page based on user type
       setTimeout(() => {
-        router.push(`/material/${materialId}`);
+        if (isAdmin) {
+          router.push(`/admin/materiales`);
+        } else {
+          router.push(`/material/${materialId}`);
+        }
       }, 1500);
     }
-  }, [state.status, router, materialId]);
+  }, [state.status, router, materialId, isAdmin]);
 
   const actionStatusChange = async (checked: boolean) => {
     const newStatus = checked ? 1 : 0;
@@ -358,112 +366,224 @@ export default function EditMaterialForm({
         </div>
 
         {/* Conditional Material Input */}
-        {materialType === "file" ? (
-          <div data-slot="form-item" className="grid gap-2">
-            <Label
-              className="data-[error=true]:text-destructive data-[error=true]:font-medium"
-              data-error={state.errors?.archivo ? "true" : "false"}
-            >
-              Archivo
-            </Label>
-            <div className="flex flex-col gap-4">
-              <div className="flex flex-wrap items-center gap-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() =>
-                    document.getElementById("file-upload")?.click()
-                  }
-                  className="file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input flex h-9 min-w-0 rounded-md border bg-transparent px-3 py-1 text-base md:text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive items-center gap-2"
-                  aria-invalid={state.errors?.archivo ? "true" : "false"}
-                >
-                  <FileIcon className="size-4" />
-                  {selectedFile
-                    ? "Cambiar archivo"
-                    : "Seleccionar nuevo archivo"}
-                </Button>
-                <input
-                  type="file"
-                  id="file-upload"
-                  name="archivo"
-                  className="hidden"
-                  accept=".pdf,.zip"
-                  onChange={handleFileChange}
-                />
-                <span className="text-sm text-muted-foreground">
-                  {selectedFile
-                    ? "Nuevo archivo seleccionado"
-                    : "Mantener archivo actual o seleccionar nuevo"}
-                </span>
-              </div>
-
-              {selectedFile && (
-                <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg max-w-4xl">
-                  <div className="flex items-center gap-2">
-                    <FileIcon className="size-4 text-muted-foreground" />
-                    <div className="flex flex-col">
-                      <span className="text-sm font-medium">
-                        {selectedFile.name}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        {formatFileSize(selectedFile.size)}
-                      </span>
-                    </div>
-                  </div>
+        {isAdmin ? (
+          // Admin view: Show both file and URL fields regardless of material type
+          <>
+            <div data-slot="form-item" className="grid gap-2">
+              <Label
+                className="data-[error=true]:text-destructive data-[error=true]:font-medium"
+                data-error={state.errors?.archivo ? "true" : "false"}
+              >
+                Archivo
+              </Label>
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-wrap items-center gap-4">
                   <Button
                     type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={removeFile}
-                    className="text-destructive hover:text-destructive/90"
+                    variant="outline"
+                    onClick={() =>
+                      document.getElementById("file-upload")?.click()
+                    }
+                    className="file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input flex h-9 min-w-0 rounded-md border bg-transparent px-3 py-1 text-base md:text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive items-center gap-2"
+                    aria-invalid={state.errors?.archivo ? "true" : "false"}
                   >
-                    <Trash2 className="size-4" />
+                    <FileIcon className="size-4" />
+                    {selectedFile
+                      ? "Cambiar archivo"
+                      : "Seleccionar nuevo archivo"}
                   </Button>
+                  <input
+                    type="file"
+                    id="file-upload"
+                    name="archivo"
+                    className="hidden"
+                    accept=".pdf,.zip"
+                    onChange={handleFileChange}
+                  />
+                  <span className="text-sm text-muted-foreground">
+                    {selectedFile
+                      ? "Nuevo archivo seleccionado"
+                      : "Mantener archivo actual o seleccionar nuevo"}
+                  </span>
                 </div>
-              )}
 
-              {!selectedFile && materialType === "file" && (
-                <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                  <p className="text-sm text-blue-800">
-                    Archivo actual: {material.tipoArchivo}. Deja este campo
-                    vacío para mantener el archivo actual.
+                {selectedFile && (
+                  <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg max-w-4xl">
+                    <div className="flex items-center gap-2">
+                      <FileIcon className="size-4 text-muted-foreground" />
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium">
+                          {selectedFile.name}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {formatFileSize(selectedFile.size)}
+                        </span>
+                      </div>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={removeFile}
+                      className="text-destructive hover:text-destructive/90"
+                    >
+                      <Trash2 className="size-4" />
+                    </Button>
+                  </div>
+                )}
+
+                {!selectedFile && (
+                  <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p className="text-sm text-blue-800">
+                      Archivo actual: {material.tipoArchivo}. Deja este campo
+                      vacío para mantener el archivo actual.
+                    </p>
+                  </div>
+                )}
+
+                {state.errors?.archivo && (
+                  <p className="text-destructive text-sm -mt-1">
+                    {state.errors.archivo[0]}
                   </p>
-                </div>
-              )}
+                )}
+              </div>
+            </div>
 
-              {state.errors?.archivo && (
+            <div data-slot="form-item" className="grid gap-2">
+              <Label
+                htmlFor="url"
+                className="data-[error=true]:text-destructive data-[error=true]:font-medium flex items-center gap-2"
+                data-error={state.errors?.url ? "true" : "false"}
+              >
+                <Link className="size-4" />
+                URL del material
+              </Label>
+              <input
+                type="url"
+                id="url"
+                name="url"
+                placeholder="https://ejemplo.com/material"
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                className="file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input flex h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 text-base md:text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive"
+                aria-invalid={state.errors?.url ? "true" : "false"}
+              />
+              {state.errors?.url && (
                 <p className="text-destructive text-sm -mt-1">
-                  {state.errors.archivo[0]}
+                  {state.errors.url[0]}
                 </p>
               )}
             </div>
-          </div>
+          </>
         ) : (
-          <div data-slot="form-item" className="grid gap-2">
-            <Label
-              htmlFor="url"
-              className="data-[error=true]:text-destructive data-[error=true]:font-medium flex items-center gap-2"
-              data-error={state.errors?.url ? "true" : "false"}
-            >
-              <Link className="size-4" />
-              URL del material
-            </Label>
-            <input
-              type="url"
-              id="url"
-              name="url"
-              placeholder="https://ejemplo.com/material"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              className="file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input flex h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 text-base md:text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive"
-              aria-invalid={state.errors?.url ? "true" : "false"}
-            />
-            {state.errors?.url && (
-              <p className="text-destructive text-sm -mt-1">
-                {state.errors.url[0]}
-              </p>
-            )}
-          </div>
+          // Regular user view: Conditional based on material type
+          materialType === "file" ? (
+            <div data-slot="form-item" className="grid gap-2">
+              <Label
+                className="data-[error=true]:text-destructive data-[error=true]:font-medium"
+                data-error={state.errors?.archivo ? "true" : "false"}
+              >
+                Archivo
+              </Label>
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-wrap items-center gap-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() =>
+                      document.getElementById("file-upload")?.click()
+                    }
+                    className="file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input flex h-9 min-w-0 rounded-md border bg-transparent px-3 py-1 text-base md:text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive items-center gap-2"
+                    aria-invalid={state.errors?.archivo ? "true" : "false"}
+                  >
+                    <FileIcon className="size-4" />
+                    {selectedFile
+                      ? "Cambiar archivo"
+                      : "Seleccionar nuevo archivo"}
+                  </Button>
+                  <input
+                    type="file"
+                    id="file-upload"
+                    name="archivo"
+                    className="hidden"
+                    accept=".pdf,.zip"
+                    onChange={handleFileChange}
+                  />
+                  <span className="text-sm text-muted-foreground">
+                    {selectedFile
+                      ? "Nuevo archivo seleccionado"
+                      : "Mantener archivo actual o seleccionar nuevo"}
+                  </span>
+                </div>
+
+                {selectedFile && (
+                  <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg max-w-4xl">
+                    <div className="flex items-center gap-2">
+                      <FileIcon className="size-4 text-muted-foreground" />
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium">
+                          {selectedFile.name}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {formatFileSize(selectedFile.size)}
+                        </span>
+                      </div>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={removeFile}
+                      className="text-destructive hover:text-destructive/90"
+                    >
+                      <Trash2 className="size-4" />
+                    </Button>
+                  </div>
+                )}
+
+                {!selectedFile && materialType === "file" && (
+                  <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p className="text-sm text-blue-800">
+                      Archivo actual: {material.tipoArchivo}. Deja este campo
+                      vacío para mantener el archivo actual.
+                    </p>
+                  </div>
+                )}
+
+                {state.errors?.archivo && (
+                  <p className="text-destructive text-sm -mt-1">
+                    {state.errors.archivo[0]}
+                  </p>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div data-slot="form-item" className="grid gap-2">
+              <Label
+                htmlFor="url"
+                className="data-[error=true]:text-destructive data-[error=true]:font-medium flex items-center gap-2"
+                data-error={state.errors?.url ? "true" : "false"}
+              >
+                <Link className="size-4" />
+                URL del material
+              </Label>
+              <input
+                type="url"
+                id="url"
+                name="url"
+                placeholder="https://ejemplo.com/material"
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                className="file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input flex h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 text-base md:text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive"
+                aria-invalid={state.errors?.url ? "true" : "false"}
+              />
+              {state.errors?.url && (
+                <p className="text-destructive text-sm -mt-1">
+                  {state.errors.url[0]}
+                </p>
+              )}
+            </div>
+          )
         )}
 
         <div className="flex gap-4">
@@ -474,7 +594,7 @@ export default function EditMaterialForm({
             type="button"
             variant="outline"
             size="lg"
-            onClick={() => router.push(`/material/${materialId}`)}
+            onClick={() => router.push(isAdmin ? `/admin/materiales` : `/material/${materialId}`)}
           >
             Cancelar
           </Button>

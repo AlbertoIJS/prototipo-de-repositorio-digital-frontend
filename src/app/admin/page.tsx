@@ -205,29 +205,24 @@ export default async function Admin() {
         />
       </div>
 
+      <QuickActions />
+
       {/* Charts Row 1 - Main Analytics */}
       <div className="grid gap-6 md:grid-cols-2">
         <UserGrowthChart data={analyticsData.userGrowth} />
+        <MaterialsByStatusChart data={analyticsData.materialsByStatus} />
       </div>
 
       {/* Charts Row 2 - Distribution and Status */}
       <div className="grid gap-6 md:grid-cols-2">
         <MaterialsByTagChart data={analyticsData.materialsByTag} />
-        <MaterialsByStatusChart data={analyticsData.materialsByStatus} />
+          <PopularMaterialsTable data={analyticsData.popularMaterials} />
       </div>
 
       {/* Content Row - Activity and Popular Materials */}
-      <div className="grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-          <PopularMaterialsTable data={analyticsData.popularMaterials} />
-        </div>
-        <div className="space-y-6">
+      <div className="grid gap-6">
           <RecentActivityCard data={analyticsData.recentActivity} />
-        </div>
       </div>
-
-      {/* Quick Actions */}
-      <QuickActions />
     </div>
   );
 }

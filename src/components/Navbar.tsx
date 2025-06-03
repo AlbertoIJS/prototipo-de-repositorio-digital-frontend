@@ -147,6 +147,9 @@ export function Navbar() {
               <DropdownMenuItem asChild className="flex-col items-start">
                 <Link href="/admin/usuarios">Usuarios</Link>
               </DropdownMenuItem>
+              <DropdownMenuItem asChild className="flex-col items-start">
+                <Link href="/admin">Panel de administración</Link>
+              </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={handleSignOut}
                 className="text-red-600"

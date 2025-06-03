@@ -202,7 +202,7 @@ export async function updateMaterial(
   const archivo = formData.get("archivo") as File;
   const url = formData.get("url") as string;
 
-  // For updates, file is optional if material type is file (existing file can be kept)
+  // For updates, both file and URL are optional - admins can modify either or both
   if (materialType === "file" && archivo && archivo.size > 0) {
     // Validate file if a new one is provided
     if (archivo.type !== "application/pdf" && archivo.type !== "application/zip") {
@@ -214,17 +214,10 @@ export async function updateMaterial(
         status: 400,
       };
     }
-  } else if (materialType === "url") {
-    if (!url || url.trim() === "") {
-      return {
-        errors: {
-          url: ["Se requiere una URL"],
-        },
-        message: "Error: Se requiere una URL",
-        status: 400,
-      };
-    }
-    // Basic URL validation
+  }
+
+  // URL validation only if provided and not empty
+  if (url && url.trim() !== "") {
     try {
       new URL(url);
     } catch {
@@ -236,7 +229,9 @@ export async function updateMaterial(
         status: 400,
       };
     }
-  } else {
+  }
+
+  if (!materialType) {
     return {
       errors: {
         materialType: ["Debe seleccionar el tipo de material"],
@@ -276,20 +271,16 @@ export async function updateMaterial(
 
     apiFormData.append("datosJson", datosJson);
     
-    // Add either file or URL based on materialType
-    if (materialType === "file") {
-      if (archivo && archivo.size > 0) {
-        apiFormData.append("nuevoArchivo", archivo);
-      } else {
-        // Create an empty file to maintain the existing file
-        apiFormData.append("nuevoArchivo", new File([], "", { type: "application/octet-stream" }));
-      }
-      apiFormData.append("nuevaUrl", ""); // Empty URL when using file
+    // Handle file upload - always send nuevoArchivo field
+    if (archivo && archivo.size > 0) {
+      apiFormData.append("nuevoArchivo", archivo);
     } else {
-      apiFormData.append("nuevaUrl", url);
-      // Create an empty file when using URL
+      // Create an empty file to maintain the existing file
       apiFormData.append("nuevoArchivo", new File([], "", { type: "application/octet-stream" }));
     }
+    
+    // Handle URL - always send nuevaUrl field
+    apiFormData.append("nuevaUrl", url || "");
 
     const response = await fetch(
       `${process.env.NEXT_PUBLIC_API_URL}/Materiales/${materialId}?id=${userID}`,
@@ -308,6 +299,7 @@ export async function updateMaterial(
 
     revalidatePath(`/material/${materialId}`);
     revalidatePath("/mis-materiales");
+    revalidatePath("/admin/materiales");
 
     return {
       message: "Material actualizado exitosamente",
@@ -474,6 +466,7 @@ export async function updateMaterialAvailability(materialId: string, disponible:
 
     revalidatePath(`/material/${materialId}`);
     revalidatePath("/mis-materiales");
+    revalidatePath("/admin/materiales");
     
     return {
       message: disponible === 1 ? "Material marcado como disponible" : "Material marcado como no disponible",
