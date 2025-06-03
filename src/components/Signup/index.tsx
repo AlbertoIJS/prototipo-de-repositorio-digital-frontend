@@ -30,7 +30,7 @@ const FormSchema = z.object({
   email: z.string().email({ message: "Correo inválido" }),
   name: z
     .string()
-    .min(10, { message: "El nombre debe tener al menos 3 caracteres" }),
+    .min(3, { message: "El nombre debe tener al menos 3 caracteres" }),
   paternalLastName: z.string().min(3, {
     message: "El apellido paterno debe tener al menos 3 caracteres",
   }),
@@ -39,7 +39,7 @@ const FormSchema = z.object({
   }),
   studentId: z
     .string()
-    .min(6, { message: "La boleta debe tener al menos 10 números" }),
+    .min(10, { message: "La boleta debe tener al menos 10 números" }),
 });
 
 export function SignupForm({
