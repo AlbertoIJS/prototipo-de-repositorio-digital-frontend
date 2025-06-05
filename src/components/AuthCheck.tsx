@@ -6,7 +6,7 @@ import { jwtDecode } from 'jwt-decode';
 import { getCookie, deleteCookie } from '@/lib/cookies';
 
 interface JWTPayload {
-  sub: string;
+  id: string;
   email: string;
   // Add other JWT fields as needed
 }
@@ -49,10 +49,16 @@ export function AuthCheck({ children }: { children: React.ReactNode }) {
           // If user is on a protected route with a token, verify it
           try {
             console.log("Verifying token...");
-            const decoded = jwtDecode<JWTPayload>(token);
-            console.log("Decoded token:", { sub: decoded.sub, email: decoded.email });
+            console.log("Token details:", {
+              length: token.length,
+              isJWT: token.includes('.') && token.split('.').length === 3,
+              firstChars: token.substring(0, 20)
+            });
             
-            if (!decoded || !decoded.sub) {
+            const decoded = jwtDecode<JWTPayload>(token);
+            console.log("Decoded token:", { id: decoded.id, email: decoded.email });
+            
+            if (!decoded || !decoded.id) {
               console.log("Invalid token structure, removing and redirecting");
               deleteCookie('auth_token');
               deleteCookie('expiresAt');
@@ -65,6 +71,11 @@ export function AuthCheck({ children }: { children: React.ReactNode }) {
           } catch (error) {
             // Invalid token
             console.error("Token decode error:", error);
+            console.error("Token that failed to decode:", {
+              token: token.substring(0, 50) + "...",
+              length: token.length,
+              isJWT: token.includes('.') && token.split('.').length === 3
+            });
             deleteCookie('auth_token');
             deleteCookie('expiresAt');
             // Also clean up localStorage for backwards compatibility

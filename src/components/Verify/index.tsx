@@ -22,7 +22,7 @@ import {
 import { verifyCode } from "@/lib/data";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { setCookie } from "@/lib/cookies";
+import { setCookie, getCookie } from "@/lib/cookies";
 
 const FormSchema = z.object({
   pin: z.string().min(6, {
@@ -60,14 +60,16 @@ export default function InputOTPForm() {
         userID,
       });
 
-      console.log("Verification response:", res);
-
       if (res.ok) {
         console.log("Verification successful, setting cookies...");
+        console.log("Token received:", {
+          exists: !!res.data.data.accessToken,
+          type: typeof res.data.data.accessToken,
+          length: res.data.data.accessToken?.length || 0,
+          firstChars: res.data.data.accessToken?.substring(0, 20) || "N/A"
+        });
         
-        // Set cookies for server-side access using utility function
         const tokenSet = setCookie("auth_token", res.data.data.accessToken);
-        const expiresSet = setCookie("expiresAt", res.data.data.expiresAt.toString());
         
         if (!tokenSet) {
           console.error("Failed to set auth_token cookie");
@@ -75,8 +77,19 @@ export default function InputOTPForm() {
           return;
         }
 
+        console.log("Cookie set successfully, verifying...");
+        // Verify the cookie was actually set
+        const retrievedToken = getCookie("auth_token");
+        console.log("Retrieved token after setting:", {
+          exists: !!retrievedToken,
+          matches: retrievedToken === res.data.data.accessToken
+        });
+
         console.log("Verification successful, redirecting to home...");
-        router.push("/");
+        // Add a small delay to ensure cookie is fully set before redirect
+        setTimeout(() => {
+          router.push("/");
+        }, 100);
       } else {
         console.error("Verification failed:", res);
         toast.error(`Verificación fallida, intenta nuevamente`);

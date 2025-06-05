@@ -8,24 +8,55 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Search, User } from "lucide-react";
-import { useEffect } from "react";
-import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState, Suspense } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { jwtDecode } from "jwt-decode";
 import Link from "next/link";
 import { getCookie, deleteCookie } from "@/lib/cookies";
 import { Input } from "./ui/input";
 
 interface JWTPayload {
-  sub: string;
+  id: string;
   email: string;
 }
 
-export function Navbar() {
+function NavbarContent() {
   const [email, setEmail] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  // Initialize search query from URL params
+  useEffect(() => {
+    const query = searchParams.get("q") || "";
+    setSearchQuery(query);
+  }, [searchParams]);
+
+  function handleSearch() {
+    const params = new URLSearchParams(searchParams);
+    
+    // Update or remove the search query
+    if (searchQuery.trim()) {
+      params.set("q", searchQuery);
+    } else {
+      params.delete("q");
+    }
+    
+    // Navigate to home if not already there, otherwise update current page
+    if (pathname !== "/") {
+      router.push(`/?${params.toString()}`);
+    } else {
+      router.push(`?${params.toString()}`);
+    }
+  }
+
+  function handleKeyPress(e: React.KeyboardEvent) {
+    if (e.key === "Enter") {
+      handleSearch();
+    }
+  }
 
   function handleSignOut() {
     console.log("=== SIGNING OUT ===");
@@ -57,7 +88,7 @@ export function Navbar() {
           console.log("Decoding token for navbar...");
           const decoded = jwtDecode<JWTPayload>(token);
           console.log("Decoded user data:", {
-            sub: decoded.sub,
+            id: decoded.id,
             email: decoded.email,
           });
           setEmail(decoded.email);
@@ -115,10 +146,17 @@ export function Navbar() {
         <Link href="/" className="text-xl font-bold">
           Repositorio ESCOM
         </Link>
-        {pathname === "/" && (
+        {(pathname === "/" || searchQuery) && (
           <div className="flex items-center gap-2">
-            <Input type="text" placeholder="Buscar" className="w-96" />
-            <Button variant="outline" size="icon">
+            <Input 
+              type="text" 
+              placeholder="Buscar materiales o autores..." 
+              className="w-96" 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyPress={handleKeyPress}
+            />
+            <Button variant="outline" size="icon" onClick={handleSearch}>
               <Search className="h-5 w-5" />
             </Button>
           </div>
@@ -161,5 +199,22 @@ export function Navbar() {
         )}
       </div>
     </nav>
+  );
+}
+
+export function Navbar() {
+  return (
+    <Suspense fallback={
+      <nav className="w-full border-b">
+        <div className="container mx-auto px-4 py-3 flex justify-between items-center">
+          <Link href="/" className="text-xl font-bold">
+            Repositorio ESCOM
+          </Link>
+          <div className="h-9 w-9" />
+        </div>
+      </nav>
+    }>
+      <NavbarContent />
+    </Suspense>
   );
 }

@@ -1,3 +1,5 @@
+"use client";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "./ui/button";
 import { formatDate } from "@/lib/utils";
@@ -5,6 +7,21 @@ import { Edit } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import DeleteBookmark from "./DeleteBookmark";
+
+interface Author {
+  id: number;
+  nombre: string;
+  apellidoP: string;
+  apellidoM: string;
+  email: string;
+  fechaCreacion: string;
+  fechaActualizacion: string;
+}
+
+interface Tag {
+  id: number;
+  nombre: string;
+}
 
 interface Material {
   id: number;
@@ -15,9 +32,12 @@ interface Material {
   tipoArchivo: string;
   fechaCreacion: string;
   fechaActualizacion: string;
+  autores?: Author[];
+  tags?: Tag[];
+  favorito?: boolean;
 }
 
-export default async function MaterialsGrid({
+export default function MaterialsGrid({
   materials,
   userID,
   isEditable = false,
@@ -58,9 +78,40 @@ export default async function MaterialsGrid({
               <p className="text-sm text-gray-500">
                 Tipo: {material.tipoArchivo}
               </p>
+              
+              {/* Show authors if available */}
+              {material.autores && material.autores.length > 0 && (
+                <div className="text-sm text-gray-600">
+                  <span className="font-medium">Autores: </span>
+                  {material.autores.map((autor, index) => (
+                    <span key={autor.id}>
+                      {autor.nombre} {autor.apellidoP} {autor.apellidoM}
+                      {index < material.autores!.length - 1 && ", "}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {/* Show tags if available */}
+              {material.tags && material.tags.length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-2">
+                  {material.tags.slice(0, 3).map((tag) => (
+                    <Badge key={tag.id} variant="outline" className="text-xs">
+                      {tag.nombre}
+                    </Badge>
+                  ))}
+                  {material.tags.length > 3 && (
+                    <Badge variant="outline" className="text-xs">
+                      +{material.tags.length - 3} más
+                    </Badge>
+                  )}
+                </div>
+              )}
+
               <p className="text-sm text-gray-500">
                 {formatDate(material.fechaCreacion)}
               </p>
+              
               <div className="flex flex-col gap-2 mt-6">
                 {!isEditable && (
                   <div className="flex justify-between items-center gap-2">

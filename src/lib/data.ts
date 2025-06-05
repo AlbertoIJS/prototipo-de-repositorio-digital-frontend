@@ -3,6 +3,11 @@
 import { cookies } from "next/headers";
 import { jwtDecode } from "jwt-decode";
 
+interface JWTPayload {
+  id: string;
+  email: string;
+}
+
 export async function signup({
   email,
   name,
@@ -72,6 +77,7 @@ export async function verifyCode({
     );
 
     const data = await res.json();
+
     if (res.ok) {
       return {
         ok: true,
@@ -133,9 +139,7 @@ export async function signin({ email }: { email: string }) {
 
 export async function fetchTags() {
   try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/Tags`
-    );
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/Tags`);
     const data = await res.json();
     return data;
   } catch (error) {
@@ -147,7 +151,7 @@ export async function fetchTags() {
 export async function fetchMaterialsByAuthor() {
   const cookieStore = await cookies();
   const token = cookieStore.get("auth_token")?.value;
-  const userID = jwtDecode(token as string).sub;
+  const userID = jwtDecode<JWTPayload>(token as string).id;
 
   try {
     const res = await fetch(
@@ -177,7 +181,7 @@ export async function fetchMaterials(userID: string) {
 export async function fetchAllMaterials() {
   const cookieStore = await cookies();
   const token = cookieStore.get("auth_token")?.value;
-  const userID = jwtDecode(token as string).sub;
+  const userID = jwtDecode<JWTPayload>(token as string).id;
 
   try {
     const res = await fetch(
@@ -194,7 +198,7 @@ export async function fetchAllMaterials() {
 export async function fetchMaterial(id: string) {
   const cookieStore = await cookies();
   const token = cookieStore.get("auth_token")?.value;
-  const userID = jwtDecode(token as string).sub;
+  const userID = jwtDecode<JWTPayload>(token as string).id;
 
   if (!token) {
     return {
@@ -249,9 +253,7 @@ export async function fetchUser(id: string) {
 
 export async function fetchUsers() {
   try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/usuarios`
-    );
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/usuarios`);
     const data = await res.json();
     return data;
   } catch (error) {

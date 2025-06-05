@@ -7,6 +7,11 @@ import { cookies } from "next/headers";
 import { formatDate } from "@/lib/utils";
 import BookmarkButton from "@/components/Bookmark";
 
+interface JWTPayload {
+  id: string;
+  email: string;
+}
+
 export default async function MaterialPage({
   params,
 }: {
@@ -18,7 +23,7 @@ export default async function MaterialPage({
 
   const cookieStore = await cookies();
   const token = cookieStore.get("auth_token")?.value;
-  const userID = jwtDecode(token as string).sub;
+  const userID = jwtDecode<JWTPayload>(token as string).id;
 
   if (!userID) {
     return <div>No estás autenticado</div>;

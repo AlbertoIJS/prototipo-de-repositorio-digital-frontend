@@ -67,21 +67,10 @@ export function SignupForm({
     try {
       const res = await signup(data);
 
+      console.log(res);
+      
       if (res?.ok) {
         localStorage.setItem("userID", res.data.data.id);
-        
-        // Set cookies for server-side access if tokens are provided
-        if (res.data.data.accessToken) {
-          console.log("Setting auth_token cookie:", res.data.data.accessToken);
-          document.cookie = `auth_token=${encodeURIComponent(res.data.data.accessToken)}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
-        }
-        if (res.data.data.expiresAt) {
-          document.cookie = `expiresAt=${encodeURIComponent(res.data.data.expiresAt)}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
-        }
-        
-        // Debug: Check if cookies were set
-        console.log("All cookies after setting:", document.cookie);
-
         router.push("/verificar");
       }
     } catch (error) {

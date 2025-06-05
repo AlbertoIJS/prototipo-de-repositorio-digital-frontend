@@ -5,6 +5,11 @@ import { z } from "zod";
 import { cookies } from "next/headers";
 import { jwtDecode } from "jwt-decode";
 
+interface JWTPayload {
+  id: string;
+  email: string;
+}
+
 export type State = {
   errors?: {
     nombreMaterial?: string[];
@@ -195,7 +200,7 @@ export async function updateMaterial(
     };
   }
 
-  const userID = jwtDecode(token).sub;
+  const userID = jwtDecode<JWTPayload>(token).id;
 
   const materialType = formData.get("materialType") as string;
   const archivo = formData.get("archivo") as File;

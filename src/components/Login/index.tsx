@@ -56,18 +56,7 @@ export function LoginForm({
     console.log(res);
 
     if (res.ok) {
-      localStorage.setItem("userID", res.data.data.id);
-      
-      // Set cookies for server-side access using utility function
-      const tokenSet = setCookie("auth_token", res.data.data.accessToken);
-      const expiresSet = setCookie("expiresAt", res.data.data.expiresAt.toString());
-      
-      if (!tokenSet) {
-        console.error("Failed to set auth_token cookie");
-        toast.error("Error al guardar la sesión. Por favor, intenta nuevamente.");
-        return;
-      }
-        
+      localStorage.setItem("userID", res.data.data.id); 
       router.push("/verificar");
     } else {
       toast.error("Verifica tu correo e intenta nuevamente");

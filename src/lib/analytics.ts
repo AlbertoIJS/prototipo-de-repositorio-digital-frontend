@@ -3,6 +3,11 @@
 import { cookies } from "next/headers";
 import { jwtDecode } from "jwt-decode";
 
+interface JWTPayload {
+  id: string;
+  email: string;
+}
+
 export interface AnalyticsData {
   totalUsers: number;
   totalMaterials: number;
@@ -323,7 +328,7 @@ export async function fetchUserStats() {
       throw new Error("No auth token found");
     }
 
-    const userID = jwtDecode(token as string).sub;
+    const userID = jwtDecode<JWTPayload>(token as string).id;
     
     // Fetch user-specific materials
     const response = await fetch(

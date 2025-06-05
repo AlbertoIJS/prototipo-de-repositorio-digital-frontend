@@ -27,9 +27,17 @@ export function setCookie(name: string, value: string, options: {
     console.log(`Setting cookie: ${name}`, { 
       originalLength: value.length, 
       encodedLength: encodedValue.length,
+      cookieStringLength: cookieString.length,
       cookieString: cookieString.substring(0, 100) + '...',
-      fullCookieString: cookieString.length > 4000 ? 'TOO_LONG' : 'OK'
+      fullCookieString: cookieString.length > 4000 ? 'TOO_LONG' : 'OK',
+      isJWT: value.includes('.') && value.split('.').length === 3
     });
+    
+    // Check if cookie is too large
+    if (cookieString.length > 4096) {
+      console.error(`Cookie ${name} is too large (${cookieString.length} bytes). Browser limit is ~4KB.`);
+      return false;
+    }
     
     // Show current cookies before setting
     console.log("Current cookies before setting:", document.cookie);
@@ -42,6 +50,10 @@ export function setCookie(name: string, value: string, options: {
     // Verify the cookie was set
     const wasSet = document.cookie.includes(`${name}=`);
     console.log(`Cookie ${name} was ${wasSet ? 'successfully set' : 'NOT set'}`);
+    
+    if (!wasSet) {
+      console.error(`Failed to set cookie ${name}. Possible causes: size limit, domain restrictions, or browser settings.`);
+    }
     
     return wasSet;
   } catch (error) {
