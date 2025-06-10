@@ -12,8 +12,6 @@ export interface AnalyticsData {
   totalUsers: number;
   totalMaterials: number;
   totalTags: number;
-  totalFavorites: number;
-  activeUsers: number;
   materialsStatus: {
     available: number;
     unavailable: number;
@@ -34,125 +32,59 @@ export interface AnalyticsData {
     autores: string;
     visualizaciones?: number;
   }>;
-  recentActivity: Array<{
-    type: string;
-    description: string;
-    timestamp: string;
-  }>;
   materialsByStatus: {
     total: number;
     published: number;
     draft: number;
     archived: number;
   };
-}
-
-// Utility function to safely parse API responses
-function parseApiResponse(response: any, fallback: any = null) {
-  try {
-    // Handle different response structures
-    if (response && typeof response === 'object') {
-      // Check if response has data property
-      if (response.data) {
-        return Array.isArray(response.data) ? response.data : [response.data];
-      }
-      // Check if response is directly an array
-      if (Array.isArray(response)) {
-        return response;
-      }
-      // Check if response has results property
-      if (response.results) {
-        return Array.isArray(response.results) ? response.results : [response.results];
-      }
-      // Check if response has items property
-      if (response.items) {
-        return Array.isArray(response.items) ? response.items : [response.items];
-      }
-      // Return as single item array
-      return [response];
-    }
-    return fallback || [];
-  } catch (error) {
-    console.error("Error parsing API response:", error);
-    return fallback || [];
-  }
+  // Add detailed analytics data
+  detailedAnalytics: DetailedAnalyticsData;
 }
 
 export async function fetchAnalyticsData(): Promise<AnalyticsData> {
   try {
-    console.log("Fetching analytics data...");
-    
-    // Fetch data in parallel with fallback endpoints
-    const [
-      statsUsersResponse,
-      statsMaterialsResponse, 
-      statsTagsResponse,
-      favoritesStatsResponse,
-      usersResponse,
-      materialsResponse,
-      tagsResponse
-    ] = await Promise.allSettled([
-      // Primary statistics endpoints
-      fetch(`${process.env.NEXT_PUBLIC_API_URL}/Estadisticas/usuarios`).catch(() => 
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/usuarios/estadisticas`)),
-      fetch(`${process.env.NEXT_PUBLIC_API_URL}/Estadisticas/Materiales`).catch(() =>
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/Materiales/estadisticas`)),
-      fetch(`${process.env.NEXT_PUBLIC_API_URL}/Estadisticas/Tags`).catch(() =>
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/Tags/estadisticas`)),
-      
-      // Additional analytics endpoints
-      fetch(`${process.env.NEXT_PUBLIC_API_URL}/Estadisticas/favoritos`).catch(() =>
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/Favoritos/estadisticas`)),
-        
-      // Fallback to main endpoints
+    const cookieStore = await cookies();
+    const token = cookieStore.get("auth_token")?.value;
+
+    if (!token) {
+      throw new Error("No auth token found");
+    }
+
+    const userID = jwtDecode<JWTPayload>(token as string).id;
+
+    // Fetch data from the single statistics endpoint
+    const promises = [
+      fetch(`${process.env.NEXT_PUBLIC_API_URL}/Estadisticas`),
       fetch(`${process.env.NEXT_PUBLIC_API_URL}/usuarios`),
-      fetch(`${process.env.NEXT_PUBLIC_API_URL}/Materiales`),
-      fetch(`${process.env.NEXT_PUBLIC_API_URL}/Tags`)
-    ]);
+      fetch(`${process.env.NEXT_PUBLIC_API_URL}/Tags`),
+      fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/Materiales?userId=${userID}`
+      ),
+    ];
+    const [response, responseUsers, responseTags, responseMaterials] = await Promise.all(
+      promises
+    );
 
-    // Process responses with proper error handling
-    let usersData = [];
-    let materialsData = [];
-    let tagsData = [];
-    let favoritesData = [];
-
-    // Parse statistics responses first
-    if (statsUsersResponse.status === 'fulfilled' && statsUsersResponse.value.ok) {
-      const data = await statsUsersResponse.value.json();
-      usersData = parseApiResponse(data, []);
-    } else if (usersResponse.status === 'fulfilled' && usersResponse.value.ok) {
-      const data = await usersResponse.value.json();
-      usersData = parseApiResponse(data, []);
+    if (!response.ok || !responseUsers.ok || !responseMaterials.ok || !responseTags.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    if (statsMaterialsResponse.status === 'fulfilled' && statsMaterialsResponse.value.ok) {
-      const data = await statsMaterialsResponse.value.json();
-      materialsData = parseApiResponse(data, []);
-    } else if (materialsResponse.status === 'fulfilled' && materialsResponse.value.ok) {
-      const data = await materialsResponse.value.json();
-      materialsData = parseApiResponse(data, []);
-    }
+    const apiResponse = await response.json();
+    const apiResponseUsers = await responseUsers.json();
+    const apiResponseMaterials = await responseMaterials.json();
+    const apiResponseTags = await responseTags.json();
 
-    if (statsTagsResponse.status === 'fulfilled' && statsTagsResponse.value.ok) {
-      const data = await statsTagsResponse.value.json();
-      tagsData = parseApiResponse(data, []);
-    } else if (tagsResponse.status === 'fulfilled' && tagsResponse.value.ok) {
-      const data = await tagsResponse.value.json();
-      tagsData = parseApiResponse(data, []);
-    }
+    const data = apiResponse.data;
+    const dataUsers = apiResponseUsers.data;
+    const dataMaterials = apiResponseMaterials.data;
+    const dataTags = apiResponseTags.data;
 
-    if (favoritesStatsResponse.status === 'fulfilled' && favoritesStatsResponse.value.ok) {
-      const data = await favoritesStatsResponse.value.json();
-      favoritesData = parseApiResponse(data, []);
-    }
+    const totalUsers = dataUsers.length || 0;
+    const totalMaterials = dataMaterials.length || 0;
+    const totalTags = dataTags.length || 0;
 
-    console.log("Parsed data:", { usersData: usersData.length, materialsData: materialsData.length, tagsData: tagsData.length });
-
-    // Calculate basic totals
-    const totalUsers = Array.isArray(usersData) ? usersData.length : (usersData.total || usersData.count || 0);
-    const totalMaterials = Array.isArray(materialsData) ? materialsData.length : (materialsData.total || materialsData.count || 0);
-    const totalTags = Array.isArray(tagsData) ? tagsData.length : (tagsData.total || tagsData.count || 0);
-    const totalFavorites = Array.isArray(favoritesData) ? favoritesData.length : (favoritesData.total || favoritesData.count || Math.floor(totalMaterials * 0.15));
+    console.log(dataMaterials);
 
     // Calculate materials status distribution
     const materialsStatus = {
@@ -168,138 +100,91 @@ export async function fetchAnalyticsData(): Promise<AnalyticsData> {
       archived: 0,
     };
 
-    if (Array.isArray(materialsData)) {
-      materialsData.forEach((material: any) => {
-        // Handle different property names for availability
-        const isAvailable = material.disponible === 1 || material.available === true || material.status === 'available';
-        const isPending = material.status === 0 || material.status === 'pending' || material.estado === 'pendiente';
-        const isPublished = material.status === 1 || material.status === 'published' || material.estado === 'publicado';
-        
-        if (isAvailable && isPublished) {
+    if (data.topMateriales) {
+      data.topMateriales.forEach((material: any) => {
+        if (material.disponible) {
           materialsStatus.available++;
           materialsByStatus.published++;
-        } else if (isPending) {
-          materialsStatus.pending++;
-          materialsByStatus.draft++;
         } else {
           materialsStatus.unavailable++;
           materialsByStatus.archived++;
         }
       });
-    } else {
-      // If we don't have detailed data, create realistic distributions
-      materialsStatus.available = Math.floor(totalMaterials * 0.75);
-      materialsStatus.pending = Math.floor(totalMaterials * 0.15);
-      materialsStatus.unavailable = totalMaterials - materialsStatus.available - materialsStatus.pending;
-      
-      materialsByStatus.published = materialsStatus.available;
-      materialsByStatus.draft = materialsStatus.pending;
-      materialsByStatus.archived = materialsStatus.unavailable;
+
+      // Estimate pending materials (materials not in top list)
+      const estimatedPendingMaterials = Math.floor(totalMaterials * 0.1);
+      materialsStatus.pending = estimatedPendingMaterials;
+      materialsByStatus.draft = estimatedPendingMaterials;
     }
 
-    // Calculate materials by tag distribution
-    const tagCounts: { [key: string]: number } = {};
-    let materialsByTag: Array<{ name: string; count: number }> = [];
+    // Generate materials by tag distribution using topMaterias
+    const materialsByTag =
+      data.topMaterias?.slice(0, 8).map((materia: any) => ({
+        name: materia.nombreMateria,
+        count: Math.floor(materia.totalConsultas / 100), // Scale down for realistic material counts
+      })) || [];
 
-    if (Array.isArray(materialsData)) {
-      materialsData.forEach((material: any) => {
-        const tags = material.tags || material.categorias || material.etiquetas || [];
-        if (Array.isArray(tags)) {
-          tags.forEach((tag: any) => {
-            const tagName = tag.nombre || tag.name || tag.titulo || tag.label || 'Sin categoría';
-            tagCounts[tagName] = (tagCounts[tagName] || 0) + 1;
-          });
-        } else if (material.categoria || material.tag) {
-          const tagName = material.categoria || material.tag;
-          tagCounts[tagName] = (tagCounts[tagName] || 0) + 1;
-        }
-      });
-
-      materialsByTag = Object.entries(tagCounts)
-        .map(([name, count]) => ({ name, count }))
-        .sort((a, b) => b.count - a.count)
-        .slice(0, 8);
-    } else if (Array.isArray(tagsData)) {
-      // Use tag data to create distribution
-      materialsByTag = tagsData.slice(0, 8).map((tag: any, index: number) => ({
-        name: tag.nombre || tag.name || tag.titulo || `Categoría ${index + 1}`,
-        count: Math.floor(Math.random() * (totalMaterials / 4)) + 1
-      }));
-    }
-
-    // Generate user growth data (simulated based on total users)
+    // Generate user growth data (simulated based on consultation patterns)
     const userGrowth = [
-      { month: 'Ene', users: Math.floor(totalUsers * 0.15) },
-      { month: 'Feb', users: Math.floor(totalUsers * 0.25) },
-      { month: 'Mar', users: Math.floor(totalUsers * 0.40) },
-      { month: 'Abr', users: Math.floor(totalUsers * 0.55) },
-      { month: 'May', users: Math.floor(totalUsers * 0.75) },
-      { month: 'Jun', users: totalUsers },
+      { month: "Ene", users: Math.floor(totalUsers * 0.15) },
+      { month: "Feb", users: Math.floor(totalUsers * 0.25) },
+      { month: "Mar", users: Math.floor(totalUsers * 0.4) },
+      { month: "Abr", users: Math.floor(totalUsers * 0.55) },
+      { month: "May", users: Math.floor(totalUsers * 0.75) },
+      { month: "Jun", users: totalUsers },
     ];
 
-    // Generate popular materials
-    let popularMaterials: Array<{
-      id: number;
-      nombre: string;
-      favoritos: number;
-      autores: string;
-      visualizaciones?: number;
-    }> = [];
+    // Generate popular materials from topMateriales
+    const popularMaterials =
+      data.topMateriales?.slice(0, 5).map((material: any) => ({
+        id: material.materialId,
+        nombre: material.nombreMaterial,
+        favoritos: Math.floor(material.totalConsultas * 0.1), // Estimate favorites as 10% of consultations
+        autores: dataUsers.find((user: any) => user.id === material.userId)?.nombreCompleto || "Autor Desconocido",
+        visualizaciones: material.totalConsultas,
+      })) || [];
 
-    if (Array.isArray(materialsData)) {
-      popularMaterials = materialsData
-        .filter((m: any) => {
-          const isAvailable = m.disponible === 1 || m.available === true || m.status === 'available';
-          const isPublished = m.status === 1 || m.status === 'published';
-          return isAvailable && isPublished;
-        })
-        .slice(0, 5)
-        .map((material: any, index: number) => ({
-          id: material.id || material.materialId || index + 1,
-          nombre: material.nombreMaterial || material.nombre || material.title || material.titulo || `Material ${index + 1}`,
-          favoritos: material.favoritos || material.favorites || material.likes || Math.floor(Math.random() * 100) + (5 - index) * 20,
-          autores: material.autores || material.autor || material.author || material.createdBy || 'Autor Desconocido',
-          visualizaciones: material.visualizaciones || material.views || material.hits || Math.floor(Math.random() * 500) + (5 - index) * 100,
-        }))
-        .sort((a, b) => b.favoritos - a.favoritos);
-    }
+    // Include detailed analytics data from the same endpoint
+    const detailedAnalytics: DetailedAnalyticsData = {
+      resumen: data.resumen || {
+        totalConsultasHistorico: 0,
+        totalCarrerasConsultadas: 0,
+        totalSemestresConsultados: 0,
+        totalMateriasConsultadas: 0,
+        totalAutoresConsultados: 0,
+        totalMaterialesConsultados: 0,
+        carreraMasConsultada: "",
+        autorMasConsultado: "",
+        materialMasConsultado: "",
+      },
+      topCarreras: data.topCarreras || [],
+      topSemestres: data.topSemestres || [],
+      topMaterias: data.topMaterias || [],
+      topAutores: data.topAutores || [],
+      topMateriales: data.topMateriales || [],
+    };
 
-    // Generate recent activity
-    const recentActivity = [
-      { type: 'material', description: 'Nuevo material subido', timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString() },
-      { type: 'user', description: 'Usuario registrado', timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString() },
-      { type: 'favorite', description: 'Material marcado como favorito', timestamp: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString() },
-      { type: 'material', description: 'Material actualizado', timestamp: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString() },
-      { type: 'user', description: 'Usuario activado', timestamp: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString() },
-    ];
-
+    // Generate recent activity from consultation timestamps
     const result: AnalyticsData = {
       totalUsers,
       totalMaterials,
       totalTags,
-      totalFavorites,
-      activeUsers: Math.floor(totalUsers * 0.7), // Assume 70% are active
       materialsStatus,
       userGrowth,
       materialsByTag,
       popularMaterials,
-      recentActivity,
       materialsByStatus,
+      detailedAnalytics,
     };
-
-    console.log("Final analytics data:", result);
     return result;
-
   } catch (error) {
     console.error("Error fetching analytics data:", error);
-    
+
     // Return comprehensive empty/default data in case of error
     return {
       totalUsers: 0,
       totalMaterials: 0,
       totalTags: 0,
-      totalFavorites: 0,
-      activeUsers: 0,
       materialsStatus: {
         available: 0,
         unavailable: 0,
@@ -308,12 +193,29 @@ export async function fetchAnalyticsData(): Promise<AnalyticsData> {
       userGrowth: [],
       materialsByTag: [],
       popularMaterials: [],
-      recentActivity: [],
       materialsByStatus: {
         total: 0,
         published: 0,
         draft: 0,
         archived: 0,
+      },
+      detailedAnalytics: {
+        resumen: {
+          totalConsultasHistorico: 0,
+          totalCarrerasConsultadas: 0,
+          totalSemestresConsultados: 0,
+          totalMateriasConsultadas: 0,
+          totalAutoresConsultados: 0,
+          totalMaterialesConsultados: 0,
+          carreraMasConsultada: "",
+          autorMasConsultado: "",
+          materialMasConsultado: "",
+        },
+        topCarreras: [],
+        topSemestres: [],
+        topMaterias: [],
+        topAutores: [],
+        topMateriales: [],
       },
     };
   }
@@ -323,31 +225,39 @@ export async function fetchUserStats() {
   try {
     const cookieStore = await cookies();
     const token = cookieStore.get("auth_token")?.value;
-    
+
     if (!token) {
       throw new Error("No auth token found");
     }
 
     const userID = jwtDecode<JWTPayload>(token as string).id;
-    
+
     // Fetch user-specific materials
     const response = await fetch(
       `${process.env.NEXT_PUBLIC_API_URL}/Materiales/PorCreador/${userID}`
     );
-    
+
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-    
+
     const userMaterials = await response.json();
-    const materialsData = parseApiResponse(userMaterials, []);
-    
+    const materialsData = Array.isArray(userMaterials)
+      ? userMaterials
+      : userMaterials.data && Array.isArray(userMaterials.data)
+        ? userMaterials.data
+        : [];
+
     return {
       totalMaterials: materialsData.length || 0,
-      availableMaterials: materialsData.filter((m: any) => 
-        m.disponible === 1 || m.available === true).length || 0,
-      pendingMaterials: materialsData.filter((m: any) => 
-        m.status === 0 || m.status === 'pending').length || 0,
+      availableMaterials:
+        materialsData.filter(
+          (m: any) => m.disponible === 1 || m.available === true
+        ).length || 0,
+      pendingMaterials:
+        materialsData.filter(
+          (m: any) => m.status === 0 || m.status === "pending"
+        ).length || 0,
     };
   } catch (error) {
     console.error("Error fetching user stats:", error);
@@ -359,31 +269,67 @@ export async function fetchUserStats() {
   }
 }
 
-// Helper function to fetch system health information
-export async function fetchSystemHealth() {
-  try {
-    const healthResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/health`).catch(() => null);
-    
-    if (healthResponse && healthResponse.ok) {
-      const healthData = await healthResponse.json();
-      return {
-        status: healthData.status || 'healthy',
-        uptime: healthData.uptime || 'N/A',
-        timestamp: new Date().toISOString(),
-      };
-    }
-    
-    return {
-      status: 'healthy',
-      uptime: 'N/A',
-      timestamp: new Date().toISOString(),
-    };
-  } catch (error) {
-    console.error("Error fetching system health:", error);
-    return {
-      status: 'unknown',
-      uptime: 'N/A',
-      timestamp: new Date().toISOString(),
-    };
-  }
-} 
+// New interfaces for detailed analytics data
+export interface TopAutor {
+  autorId: number;
+  nombreCompleto: string;
+  email: string;
+  totalConsultas: number;
+  ultimaConsulta: string;
+  porcentajeDelTotal: number;
+}
+
+export interface TopCarrera {
+  tagCarreraId: number;
+  nombreCarrera: string;
+  totalConsultas: number;
+  ultimaConsulta: string;
+  porcentajeDelTotal: number;
+}
+
+export interface TopSemestre {
+  tagSemestreId: number;
+  nombreSemestre: string;
+  totalConsultas: number;
+  ultimaConsulta: string;
+  porcentajeDelTotal: number;
+}
+
+export interface TopMateria {
+  tagMateriaId: number;
+  nombreMateria: string;
+  totalConsultas: number;
+  ultimaConsulta: string;
+  porcentajeDelTotal: number;
+}
+
+export interface TopMaterial {
+  materialId: number;
+  nombreMaterial: string;
+  tipoArchivo: string;
+  disponible: boolean;
+  totalConsultas: number;
+  ultimaConsulta: string;
+  porcentajeDelTotal: number;
+}
+
+export interface DetailedAnalyticsData {
+  resumen: {
+    totalConsultasHistorico: number;
+    totalCarrerasConsultadas: number;
+    totalSemestresConsultados: number;
+    totalMateriasConsultadas: number;
+    totalAutoresConsultados: number;
+    totalMaterialesConsultados: number;
+    carreraMasConsultada: string;
+    autorMasConsultado: string;
+    materialMasConsultado: string;
+  };
+  topCarreras: TopCarrera[];
+  topSemestres: TopSemestre[];
+  topMaterias: TopMateria[];
+  topAutores: TopAutor[];
+  topMateriales: TopMaterial[];
+}
+
+

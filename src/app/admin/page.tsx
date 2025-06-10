@@ -10,8 +10,10 @@ import {
   UserGrowthChart,
   MaterialsByTagChart,
   MaterialsByStatusChart,
-  RecentActivityCard,
   PopularMaterialsTable,
+  TopAutoresList,
+  TopCarrerasChart,
+  TopSemestresChart,
 } from "@/components/Analytics/Charts";
 import {
   Users,
@@ -84,13 +86,13 @@ function QuickActions() {
       bg: "hover:bg-green-50",
     },
     // TODO: Add page to manage tags (CRUD)
-    {
-      icon: Tags,
-      label: "Gestionar Categorías",
-      href: "/admin/categorias",
-      color: "text-purple-500",
-      bg: "hover:bg-purple-50",
-    },
+    // {
+    //   icon: Tags,
+    //   label: "Gestionar Categorías",
+    //   href: "/admin/categorias",
+    //   color: "text-purple-500",
+    //   bg: "hover:bg-purple-50",
+    // },
   ];
 
   return (
@@ -100,7 +102,7 @@ function QuickActions() {
         <CardDescription>Operaciones administrativas comunes</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 gap-3">
           {actions.map((action, index) => (
             <Link
               key={index}
@@ -137,50 +139,30 @@ export default async function Admin() {
 
       {/* PDF Content - Everything below header */}
       <div data-pdf-content className="space-y-6">
-        {/* Stats Overview */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-2">
           <StatCard
             title="Total Usuarios"
             value={analyticsData.totalUsers}
             description="Usuarios registrados en el sistema"
             icon={Users}
             color="text-blue-500"
-            trend={{ value: 12, isPositive: true }}
           />
-          <StatCard
-            title="Usuarios Activos"
-            value={analyticsData.activeUsers}
-            description="Usuarios con actividad reciente"
-            icon={UserCheck}
-            color="text-green-500"
-            trend={{ value: 8, isPositive: true }}
-          />
-          <StatCard
-            title="Total Materiales"
-            value={analyticsData.totalMaterials}
-            description="Materiales en el repositorio"
-            icon={FileText}
-            color="text-purple-500"
-            trend={{ value: 15, isPositive: true }}
-          />
-          <StatCard
-            title="Total Favoritos"
-            value={analyticsData.totalFavorites}
-            description="Materiales marcados como favoritos"
-            icon={Heart}
-            color="text-red-500"
-            trend={{ value: 22, isPositive: true }}
-          />
-        </div>
-
-        {/* Secondary Stats */}
-        <div className="grid gap-4 md:grid-cols-3">
           <StatCard
             title="Categorías"
             value={analyticsData.totalTags}
             description="Tags de clasificación"
             icon={Tags}
             color="text-orange-500"
+          />
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <StatCard
+            title="Total Materiales"
+            value={analyticsData.totalMaterials}
+            description="Materiales en el repositorio"
+            icon={FileText}
+            color="text-purple-500"
           />
           <StatCard
             title="Materiales Publicados"
@@ -197,7 +179,6 @@ export default async function Admin() {
             color="text-yellow-600"
           />
         </div>
-
         <QuickActions />
 
         {/* Charts Row 1 - Main Analytics */}
@@ -206,16 +187,18 @@ export default async function Admin() {
           <MaterialsByStatusChart data={analyticsData.materialsByStatus} />
         </div>
 
+        {/* Charts Row 3 - Detailed Analytics */}
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <TopAutoresList data={analyticsData.detailedAnalytics.topAutores} />
+          <TopCarrerasChart data={analyticsData.detailedAnalytics.topCarreras} />
+          <TopSemestresChart data={analyticsData.detailedAnalytics.topSemestres} />
+        </div>
+        
         {/* Charts Row 2 - Distribution and Status */}
         <div className="grid gap-6 md:grid-cols-2">
-          <MaterialsByTagChart data={analyticsData.materialsByTag} />
           <PopularMaterialsTable data={analyticsData.popularMaterials} />
         </div>
 
-        {/* Content Row - Activity and Popular Materials */}
-        <div className="grid gap-6">
-          <RecentActivityCard data={analyticsData.recentActivity} />
-        </div>
       </div>
     </div>
   );

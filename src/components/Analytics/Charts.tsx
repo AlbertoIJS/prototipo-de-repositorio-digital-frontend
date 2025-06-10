@@ -1,30 +1,56 @@
 "use client";
 
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
   ResponsiveContainer,
   PieChart,
   Pie,
   Cell,
   AreaChart,
-  Area
-} from 'recharts';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+  Area,
+  Legend,
+} from "recharts";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ChartErrorBoundary } from "./ErrorBoundary";
-import { Activity, Clock, Eye, FileText, Users, Heart } from 'lucide-react';
-import type { AnalyticsData } from "@/lib/analytics";
+import {
+  Activity,
+  Clock,
+  Eye,
+  FileText,
+  Users,
+  Heart,
+  GraduationCap,
+  BookOpen,
+  User,
+} from "lucide-react";
+import type {
+  AnalyticsData,
+  TopAutor,
+  TopCarrera,
+  TopSemestre,
+} from "@/lib/analytics";
 
-export function MaterialsStatusChart({ data }: { data: AnalyticsData['materialsStatus'] }) {
+export function MaterialsStatusChart({
+  data,
+}: {
+  data: AnalyticsData["materialsStatus"];
+}) {
   const chartData = [
-    { name: 'Disponibles', value: data.available, color: '#00C49F' },
-    { name: 'No Disponibles', value: data.unavailable, color: '#FF8042' },
-    { name: 'Pendientes', value: data.pending, color: '#FFBB28' },
+    { name: "Disponibles", value: data.available, color: "#00C49F" },
+    { name: "No Disponibles", value: data.unavailable, color: "#FF8042" },
+    { name: "Pendientes", value: data.pending, color: "#FFBB28" },
   ];
 
   return (
@@ -32,7 +58,9 @@ export function MaterialsStatusChart({ data }: { data: AnalyticsData['materialsS
       <Card>
         <CardHeader>
           <CardTitle>Estado de Materiales</CardTitle>
-          <CardDescription>Distribución de materiales por estado</CardDescription>
+          <CardDescription>
+            Distribución de materiales por estado
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={300}>
@@ -42,7 +70,9 @@ export function MaterialsStatusChart({ data }: { data: AnalyticsData['materialsS
                 cx="50%"
                 cy="50%"
                 labelLine={false}
-                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                label={({ name, percent }) =>
+                  `${name} ${(percent * 100).toFixed(0)}%`
+                }
                 outerRadius={80}
                 fill="#8884d8"
                 dataKey="value"
@@ -60,7 +90,11 @@ export function MaterialsStatusChart({ data }: { data: AnalyticsData['materialsS
   );
 }
 
-export function UserGrowthChart({ data }: { data: AnalyticsData['userGrowth'] }) {
+export function UserGrowthChart({
+  data,
+}: {
+  data: AnalyticsData["userGrowth"];
+}) {
   return (
     <ChartErrorBoundary>
       <Card>
@@ -75,10 +109,10 @@ export function UserGrowthChart({ data }: { data: AnalyticsData['userGrowth'] })
               <XAxis dataKey="month" />
               <YAxis />
               <Tooltip />
-              <Area 
-                type="monotone" 
-                dataKey="users" 
-                stroke="#0088FE" 
+              <Area
+                type="monotone"
+                dataKey="users"
+                stroke="#0088FE"
                 fill="#0088FE"
                 fillOpacity={0.3}
               />
@@ -90,7 +124,11 @@ export function UserGrowthChart({ data }: { data: AnalyticsData['userGrowth'] })
   );
 }
 
-export function MaterialsByTagChart({ data }: { data: AnalyticsData['materialsByTag'] }) {
+export function MaterialsByTagChart({
+  data,
+}: {
+  data: AnalyticsData["materialsByTag"];
+}) {
   return (
     <ChartErrorBoundary>
       <Card>
@@ -114,11 +152,15 @@ export function MaterialsByTagChart({ data }: { data: AnalyticsData['materialsBy
   );
 }
 
-export function MaterialsByStatusChart({ data }: { data: AnalyticsData['materialsByStatus'] }) {
+export function MaterialsByStatusChart({
+  data,
+}: {
+  data: AnalyticsData["materialsByStatus"];
+}) {
   const chartData = [
-    { name: 'Publicados', value: data.published, color: '#00C49F' },
-    { name: 'Borradores', value: data.draft, color: '#FFBB28' },
-    { name: 'Archivados', value: data.archived, color: '#FF8042' },
+    { name: "Publicados", value: data.published, color: "#00C49F" },
+    { name: "Pendientes", value: data.draft, color: "#FFBB28" },
+    { name: "Ocultos", value: data.archived, color: "#FF8042" },
   ];
 
   return (
@@ -148,80 +190,35 @@ export function MaterialsByStatusChart({ data }: { data: AnalyticsData['material
   );
 }
 
-export function RecentActivityCard({ data }: { data: AnalyticsData['recentActivity'] }) {
-  const getActivityIcon = (type: string) => {
-    switch (type) {
-      case 'user':
-        return <Users className="h-4 w-4 text-blue-500" />;
-      case 'material':
-        return <FileText className="h-4 w-4 text-green-500" />;
-      case 'favorite':
-        return <Heart className="h-4 w-4 text-red-500" />;
-      default:
-        return <Activity className="h-4 w-4 text-gray-500" />;
-    }
-  };
 
-  const getActivityColor = (type: string) => {
-    switch (type) {
-      case 'user':
-        return 'bg-blue-50 border-blue-200';
-      case 'material':
-        return 'bg-green-50 border-green-200';
-      case 'favorite':
-        return 'bg-red-50 border-red-200';
-      default:
-        return 'bg-gray-50 border-gray-200';
-    }
-  };
 
+export function PopularMaterialsTable({
+  data,
+}: {
+  data: AnalyticsData["popularMaterials"];
+}) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Activity className="h-5 w-5" />
-          Actividad Reciente
-        </CardTitle>
-        <CardDescription>Últimas acciones en el sistema</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          {data.map((activity, index) => (
-            <div key={index} className={`flex items-center gap-3 p-3 rounded-lg border ${getActivityColor(activity.type)}`}>
-              {getActivityIcon(activity.type)}
-              <div className="flex-1">
-                <p className="text-sm font-medium">{activity.description}</p>
-                <p className="text-xs text-muted-foreground flex items-center gap-1">
-                  <Clock className="h-3 w-3" />
-                  {new Date(activity.timestamp).toLocaleString('es-ES')}
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-export function PopularMaterialsTable({ data }: { data: AnalyticsData['popularMaterials'] }) {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Materiales Más Populares</CardTitle>
-        <CardDescription>Top materiales con más favoritos y visualizaciones</CardDescription>
+        <CardTitle>Materiales Más Consultados</CardTitle>
+        <CardDescription>Listado con más visualizaciones</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
           {data.map((material, index) => (
-            <div key={material.id} className="flex items-center justify-between p-3 rounded-lg border">
+            <div
+              key={material.id}
+              className="flex items-center justify-between p-3 rounded-lg border"
+            >
               <div className="flex items-center space-x-3">
                 <div className="flex-shrink-0">
                   <Badge variant="secondary">#{index + 1}</Badge>
                 </div>
                 <div>
                   <p className="font-medium text-sm">{material.nombre}</p>
-                  <p className="text-xs text-muted-foreground">Por: {material.autores}</p>
+                  <p className="text-xs text-muted-foreground">
+                    Por: {material.autores}
+                  </p>
                 </div>
               </div>
               <div className="flex items-center space-x-4">
@@ -231,10 +228,6 @@ export function PopularMaterialsTable({ data }: { data: AnalyticsData['popularMa
                     <span>{material.visualizaciones}</span>
                   </div>
                 )}
-                <div className="flex items-center space-x-2">
-                  <Heart className="h-4 w-4 text-red-500" />
-                  <span className="font-semibold">{material.favoritos}</span>
-                </div>
               </div>
             </div>
           ))}
@@ -242,4 +235,215 @@ export function PopularMaterialsTable({ data }: { data: AnalyticsData['popularMa
       </CardContent>
     </Card>
   );
-} 
+}
+
+// New chart components for the analytics endpoint data
+
+export function TopAutoresList({ data }: { data: TopAutor[] }) {
+  // Sort by totalConsultas descending and take top 10
+  const sortedAutores = data
+    .sort((a, b) => b.totalConsultas - a.totalConsultas)
+    .slice(0, 10);
+
+  return (
+    <ChartErrorBoundary>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <User className="h-5 w-5" />
+            Autores
+          </CardTitle>
+          <CardDescription>
+            Autores con más consultas de materiales
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {sortedAutores.map((autor, index) => (
+              <div
+                key={autor.autorId}
+                className="flex items-center justify-between p-3 rounded-lg border hover:shadow-sm transition-shadow"
+              >
+                <div className="flex items-center space-x-3">
+                  <div className="flex-shrink-0">
+                    <Badge 
+                      variant={index === 0 ? "default" : "secondary"}
+                      className={index === 0 ? "bg-yellow-500 text-yellow-50" : ""}
+                    >
+                      #{index + 1}
+                    </Badge>
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-medium text-sm">{autor.nombreCompleto}</p>
+                    <p className="text-xs text-muted-foreground">{autor.email}</p>
+                    <p className="text-xs text-muted-foreground">
+                      Última consulta: {new Date(autor.ultimaConsulta).toLocaleDateString('es-ES')}
+                    </p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="font-bold text-lg">{autor.totalConsultas.toLocaleString()}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {autor.porcentajeDelTotal.toFixed(1)}% del total
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    </ChartErrorBoundary>
+  );
+}
+
+export function TopCarrerasChart({ data }: { data: TopCarrera[] }) {
+  const chartData = data.map((carrera, index) => ({
+    name: carrera.nombreCarrera,
+    value: carrera.totalConsultas,
+    porcentaje: carrera.porcentajeDelTotal,
+    color: `hsl(${(index * 60) % 360}, 70%, 60%)`,
+  }));
+
+  const renderCustomizedLabel = ({ name, porcentaje }: any) => {
+    return `${porcentaje.toFixed(1)}%`;
+  };
+
+  const renderLegend = (props: any) => {
+    const { payload } = props;
+    return (
+      <div className="flex flex-wrap gap-2 justify-center mt-4">
+        {payload.map((entry: any, index: number) => {
+          const item = chartData.find(d => d.name === entry.value);
+          return (
+            <div key={index} className="flex items-center gap-2 text-sm">
+              <div 
+                className="w-3 h-3 rounded-full" 
+                style={{ backgroundColor: entry.color }}
+              />
+              <span className="text-muted-foreground">
+                {entry.value}: {item?.porcentaje.toFixed(1)}%
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
+  return (
+    <ChartErrorBoundary>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <GraduationCap className="h-5 w-5" />
+            Carreras
+          </CardTitle>
+          <CardDescription>
+            Distribución de consultas por carrera
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ResponsiveContainer width="100%" height={450}>
+            <PieChart>
+              <Pie
+                data={chartData}
+                cx="50%"
+                cy="40%"
+                labelLine={false}
+                label={renderCustomizedLabel}
+                outerRadius={100}
+                fill="#8884d8"
+                dataKey="value"
+              >
+                {chartData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.color} />
+                ))}
+              </Pie>
+              <Tooltip
+                formatter={(value, name) => [
+                  `${value} consultas`,
+                  "Total de Consultas",
+                ]}
+              />
+              <Legend content={renderLegend} />
+            </PieChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
+    </ChartErrorBoundary>
+  );
+}
+
+export function TopSemestresChart({ data }: { data: TopSemestre[] }) {
+  // Use percentage values for better visualization when there are large differences
+  const chartData = data.map((semestre) => ({
+    name: semestre.nombreSemestre.replace("semestre", "sem."),
+    fullName: semestre.nombreSemestre,
+    totalConsultas: semestre.totalConsultas,
+    porcentaje: semestre.porcentajeDelTotal,
+    // Use percentage for the chart to normalize the differences
+    displayValue: semestre.porcentajeDelTotal,
+  }));
+
+  // Define colors for each bar
+  const colors = [
+    "#8884d8",
+    "#00C49F",
+    "#FFBB28",
+    "#FF8042",
+    "#0088FE",
+    "#82ca9d",
+  ];
+
+  return (
+    <ChartErrorBoundary>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <BookOpen className="h-5 w-5" />
+            Semestres
+          </CardTitle>
+          <CardDescription>
+            Distribución porcentual de consultas por semestre
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ResponsiveContainer width="100%" height={350}>
+            <BarChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis
+                dataKey="name"
+                tick={{ fontSize: 11 }}
+                angle={-45}
+                textAnchor="end"
+                height={80}
+              />
+              <YAxis 
+                tickFormatter={(value) => `${value}%`}
+                domain={[0, 'dataMax + 5']}
+              />
+              <Tooltip
+                formatter={(value, name) => [
+                  `${Number(value).toFixed(1)}% (${chartData.find(d => d.displayValue === value)?.totalConsultas || 0} consultas)`,
+                  "Porcentaje del Total",
+                ]}
+                labelFormatter={(label) => {
+                  const item = chartData.find((d) => d.name === label);
+                  return item ? item.fullName : label;
+                }}
+              />
+              <Bar dataKey="displayValue" radius={[4, 4, 0, 0]}>
+                {chartData.map((entry, index) => (
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={colors[index % colors.length]}
+                  />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
+    </ChartErrorBoundary>
+  );
+}
