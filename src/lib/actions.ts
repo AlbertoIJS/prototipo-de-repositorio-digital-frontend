@@ -483,3 +483,36 @@ export async function updateMaterialAvailability(materialId: string, disponible:
     };
   }
 }
+
+export async function updateMaterialStatus(materialId: string, status: number) {
+  try {
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/Admin/status?materialId=${materialId}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ status }),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error("Error al actualizar el estado del material");
+    }
+
+    revalidatePath(`/material/${materialId}`);
+    revalidatePath("/mis-materiales");
+    revalidatePath("/admin/materiales");
+    
+    return {
+      message: status === 1 ? "Material activado" : "Material desactivado",
+      status: response.status,
+    };
+  } catch (error) {
+    return {
+      message: "Error al actualizar el estado del material",
+      status: 500,
+    };
+  }
+}

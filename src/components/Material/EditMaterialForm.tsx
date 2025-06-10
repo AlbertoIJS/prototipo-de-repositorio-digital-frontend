@@ -1,6 +1,6 @@
 "use client";
 
-import { updateMaterial, updateMaterialAvailability, type State } from "@/lib/actions";
+import { updateMaterial, updateMaterialAvailability, updateMaterialStatus, type State } from "@/lib/actions";
 import { useActionState } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -67,7 +67,6 @@ export default function EditMaterialForm({
     },
     status: undefined,
   };
-
   const [state, formAction, isPending] = useActionState<State, FormData>(
     (prevState: State, formData: FormData) =>
       updateMaterial(materialId, prevState, formData),
@@ -93,6 +92,7 @@ export default function EditMaterialForm({
   const [url, setUrl] = useState(material.url || "");
   const [nombreMaterial, setNombreMaterial] = useState(material.nombre);
   const [materialStatus, setMaterialStatus] = useState(material.status);
+  const [materialDisponible, setMaterialDisponible] = useState(material.disponible);
 
   // Redirect when update is successful
   useEffect(() => {
@@ -110,9 +110,17 @@ export default function EditMaterialForm({
 
   const actionStatusChange = async (checked: boolean) => {
     const newStatus = checked ? 1 : 0;
-    const result = await updateMaterialAvailability(materialId, newStatus);
+    const result = await updateMaterialStatus(materialId, newStatus);
     if (result.status === 200) {
       setMaterialStatus(newStatus);
+    }
+  };
+
+  const actionDisponibleChange = async (checked: boolean) => {
+    const newDisponible = checked ? 1 : 0;
+    const result = await updateMaterialAvailability(materialId, newDisponible);
+    if (result.status === 200) {
+      setMaterialDisponible(newDisponible);
     }
   };
 
@@ -177,13 +185,28 @@ export default function EditMaterialForm({
       <form action={formAction} className="grid gap-6 max-w-4xl mx-auto">
         <div className="flex justify-between items-center">
           <h1 className="text-2xl font-bold mb-4">Editar material</h1>
-          <div className="flex items-center space-x-2">
-            <Switch
-              id="status"
-              checked={materialStatus === 1}
-              onCheckedChange={actionStatusChange}
-            />
-            <Label htmlFor="status">Disponible</Label>
+          <div className="flex items-center space-x-6">
+            {/* Status switch - Only for admins */}
+            {isAdmin && (
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="status"
+                  checked={materialStatus === 1}
+                  onCheckedChange={actionStatusChange}
+                />
+                <Label htmlFor="status">Activo</Label>
+              </div>
+            )}
+            
+            {/* Disponible switch - For both admins and professors */}
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="disponible"
+                checked={materialDisponible === 1}
+                onCheckedChange={actionDisponibleChange}
+              />
+              <Label htmlFor="disponible">Disponible</Label>
+            </div>
           </div>
         </div>
 
