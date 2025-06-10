@@ -39,7 +39,14 @@ const FormSchema = z.object({
   }),
   studentId: z
     .string()
-    .min(10, { message: "La boleta debe tener al menos 10 números" }),
+    .min(10, { message: "La boleta debe tener 10 caracteres" })
+    .max(10, { message: "La boleta debe tener 10 caracteres" })
+    .refine((val) => val.length >= 5 && val[4] === "6", {
+      message: "Boleta de no válida",
+    })
+    .refine((val) => val.length >= 6 && val[5] === "3", {
+      message: "Boleta de no válida",
+    }),
 });
 
 export function SignupForm({
@@ -68,7 +75,7 @@ export function SignupForm({
       const res = await signup(data);
 
       console.log(res);
-      
+
       if (res?.ok) {
         localStorage.setItem("userID", res.data.data.id);
         router.push("/verificar");
