@@ -217,7 +217,7 @@ export function PopularMaterialsTable({
                 <div>
                   <p className="font-medium text-sm">{material.nombre}</p>
                   <p className="text-xs text-muted-foreground">
-                    Por: {material.autores}
+                    Subido por: {material.autores}
                   </p>
                 </div>
               </div>

@@ -140,7 +140,9 @@ export async function fetchAnalyticsData(): Promise<AnalyticsData> {
         id: material.materialId,
         nombre: material.nombreMaterial,
         favoritos: Math.floor(material.totalConsultas * 0.1), // Estimate favorites as 10% of consultations
-        autores: dataUsers.find((user: any) => user.id === material.userId)?.nombreCompleto || "Autor Desconocido",
+        autores: dataMaterials.find(
+          (m: any) => m.id === material.materialId
+        )?.creadoPor,
         visualizaciones: material.totalConsultas,
       })) || [];
 
