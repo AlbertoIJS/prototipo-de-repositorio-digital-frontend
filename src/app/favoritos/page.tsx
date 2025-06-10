@@ -2,16 +2,21 @@ import { fetchFavorites } from "@/lib/data";
 import { jwtDecode } from "jwt-decode";
 import { cookies } from "next/headers";
 import MaterialsGrid from "@/components/MaterialsGrid";
+import { JWTPayload } from "@/types/auth";
 
 export default async function FavoritosPage() {
   const cookieStore = await cookies();
   const token = cookieStore.get("auth_token")?.value;
-  const userID = jwtDecode(token as string).sub;
+  const decodedToken = jwtDecode<JWTPayload>(token as string);
+  const userID = decodedToken.id;
+  const userRole = decodedToken.rol;
+
+  console.log(decodedToken);
 
   if (!userID) {
     return <div>No estás autenticado</div>;
   }
-
+  
   const favorites = await fetchFavorites(userID);
 
   return (
@@ -20,7 +25,7 @@ export default async function FavoritosPage() {
       {favorites.length === 0 ? (
         <p className="text-muted-foreground mt-4">Aún no tienes favoritos</p>
       ) : (
-        <MaterialsGrid userID={userID} materials={favorites.data} />
+        <MaterialsGrid userRole={userRole} materials={favorites.data} />
       )}
     </main>
   );

@@ -2,8 +2,17 @@ import MaterialsGrid from "@/components/MaterialsGrid";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { fetchAllMaterials } from "@/lib/data";
+import { jwtDecode } from "jwt-decode";
+import { cookies } from "next/headers";
+import { JWTPayload } from "@/types/auth";
 
 export default async function AdminMaterialesPage() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("auth_token")?.value;
+  const decodedToken = jwtDecode<JWTPayload>(token as string);
+  const userID = decodedToken.id;
+  const userRole = decodedToken.rol;
+
   const materials = await fetchAllMaterials();
 
   return (
@@ -14,7 +23,7 @@ export default async function AdminMaterialesPage() {
           <Link href="/crear-material">Nuevo material</Link>
         </Button>
       </div>
-      <MaterialsGrid materials={materials.data || []} isEditable={true} isAdmin={true} />
+      <MaterialsGrid materials={materials.data || []} userID={userID} userRole={userRole} />
     </main>
   );
 }

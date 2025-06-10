@@ -25,11 +25,7 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
-
-interface JWTPayload {
-  id: string;
-  email: string;
-}
+import { JWTPayload } from "@/types/auth";
 
 interface Author {
   id: number;
@@ -64,6 +60,7 @@ function HomeContent() {
   const [materials, setMaterials] = useState<Material[]>([]);
   const [loading, setLoading] = useState(true);
   const [userID, setUserID] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const [allTags, setAllTags] = useState<Tag[]>([]);
 
   const [tagPopoverOpen, setTagPopoverOpen] = useState(false);
@@ -104,14 +101,15 @@ function HomeContent() {
     }
 
     try {
-      const decodedUserID = jwtDecode<JWTPayload>(accessToken).id;
+      const decodedToken = jwtDecode<JWTPayload>(accessToken);
 
-      if (!decodedUserID) {
+      if (!decodedToken.id) {
         router.push("/login");
         return;
       }
 
-      setUserID(decodedUserID);
+      setUserID(decodedToken.id);
+      setUserRole(decodedToken.rol);
     } catch (error) {
       console.error("Error decoding token:", error);
       router.push("/login");
@@ -371,12 +369,18 @@ function HomeContent() {
         console.log("Received data:", data);
         const materialsData = data.data || [];
 
-        // Filter materials for role 1 (professors) - only show available and published materials
-        // TODO: Add proper role checking here
-        const filteredByRole = materialsData.filter(
-          (material: Material) =>
-            material.disponible === 1 && material.status === 1
-        );
+        // Filter materials for role 1 (students) - only show available and published materials
+        // For other roles, show all materials they have access to
+        let filteredByRole;
+        if (userRole === "1") {
+          filteredByRole = materialsData.filter(
+            (material: Material) =>
+              material.disponible === 1 && material.status === 1
+          );
+        } else {
+          // Professors and admins can see all materials
+          filteredByRole = materialsData;
+        }
 
         console.log("Filtered materials:", filteredByRole.length);
         setMaterials(filteredByRole);
@@ -389,7 +393,7 @@ function HomeContent() {
     };
 
     fetchMaterials();
-  }, [userID, searchQuery, searchType, selectedTagIds]); // Keep dependencies but selectedTagIds is now memoized
+  }, [userID, userRole, searchQuery, searchType, selectedTagIds]);
 
   if (loading) {
     return (
@@ -496,7 +500,7 @@ function HomeContent() {
         </div>
       )}
 
-      <div className="flex flex-col lg:flex-row gap-6">
+      <div className="flex flex-col lg:flex-row gap-6 py-8">
         {/* Mobile Header with Hamburger Menu */}
         <div className="lg:hidden mb-4">
           <div className="flex items-center justify-between">
@@ -633,7 +637,7 @@ function HomeContent() {
           </div>
 
           {/* Materials Grid */}
-          <MaterialsGrid materials={materials} userID={userID || undefined} />
+          <MaterialsGrid materials={materials} userRole="1" />
         </div>
       </div>
     </div>
