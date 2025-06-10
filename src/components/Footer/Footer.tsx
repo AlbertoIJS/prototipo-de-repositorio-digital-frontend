@@ -18,12 +18,22 @@ export default function Footer() {
             <LibraryBig className="w-6 h-6" />
             <h3 className="text-xl sm:text-2xl font-bold">Repositorio ESCOM</h3>
           </div>
-          <h4 className="font-bold">Alumnos</h4>
-          <ul className="flex flex-col gap-2 text-sm text-gray-500">
-            <li>Alberto Isaac Jurado Santos</li>
-            <li>Ávila Juárez Alexis Aramis</li>
-            <li>Gutiérrez Victorio Axel Jair</li>
-          </ul>
+          <div className="flex gap-20 flex-col sm:flex-row justify-center md:justify-start">
+            <div>
+              <h4 className="font-bold mb-2">Alumnos</h4>
+              <ul className="flex flex-col gap-2 text-sm text-gray-500">
+                <li>Alberto Isaac Jurado Santos</li>
+                <li>Ávila Juárez Alexis Aramis</li>
+                <li>Gutiérrez Victorio Axel Jair</li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-bold mb-2">Director</h4>
+              <ul className="flex flex-col gap-2 text-sm text-gray-500">
+                <li>Israel Salas Ramírez</li>
+              </ul>
+            </div>
+          </div>
         </div>
         <img
           src="/escom.png"
