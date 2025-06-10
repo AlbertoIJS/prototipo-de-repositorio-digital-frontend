@@ -85,8 +85,14 @@ export default function InputOTPForm() {
           matches: retrievedToken === res.data.data.accessToken
         });
 
+        // Trigger a custom event to notify other components (especially Navbar) about the login
+        window.dispatchEvent(new Event("localStorageUpdate"));
+        window.dispatchEvent(new Event("userLoggedIn"));
+
         console.log("Verification successful, redirecting to home...");
-        // Add a small delay to ensure cookie is fully set before redirect
+        toast.success("¡Autenticación exitosa!");
+        
+        // Add a small delay to ensure cookie is fully set and events are processed before redirect
         setTimeout(() => {
           router.push("/");
         }, 100);

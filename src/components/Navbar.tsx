@@ -141,32 +141,69 @@ function NavbarContent() {
       }
     };
 
+    // Initial load
     loadUserData();
 
     // Listen for auth changes (login/logout in other components)
     const handleAuthChange = () => {
       console.log("Auth change detected in navbar, reloading user data");
+      setIsLoading(true); // Set loading to true when auth changes
       loadUserData();
     };
 
+    // Listen for custom storage events and native storage events
     window.addEventListener("localStorageUpdate", handleAuthChange);
     window.addEventListener("storage", handleAuthChange);
+
+    // Also listen for a custom login event
+    window.addEventListener("userLoggedIn", handleAuthChange);
 
     return () => {
       window.removeEventListener("localStorageUpdate", handleAuthChange);
       window.removeEventListener("storage", handleAuthChange);
+      window.removeEventListener("userLoggedIn", handleAuthChange);
     };
   }, []);
 
-  // Don't render user menu while loading
-  if (isLoading) {
+  // Also check for auth state changes when pathname changes (e.g., after redirect from login)
+  useEffect(() => {
+    const checkAuthOnPageChange = () => {
+      console.log("Page change detected, checking auth state");
+      const token = getCookie("auth_token");
+      
+      // If we have a token but no email set, reload user data
+      if (token && !email && !isLoading) {
+        console.log("Token found but no email set, reloading user data");
+        setIsLoading(true);
+        try {
+          const decoded = jwtDecode<JWTPayload>(token);
+          setEmail(decoded.email);
+          setUserRole(decoded.rol);
+        } catch (error) {
+          console.error("Error decoding token on page change:", error);
+          setEmail(null);
+          setUserRole(null);
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    checkAuthOnPageChange();
+  }, [pathname, email, isLoading]);
+
+  // Early loading state - only show this briefly during initial mount
+  if (isLoading && !email && !userRole) {
     return (
       <nav className="w-full border-b bg-white sticky top-0 z-50">
         <div className="container mx-auto px-4 py-3 flex justify-between items-center">
-          <Link href="/" className="text-xl font-bold">
-            Repositorio ESCOM
-          </Link>
-          <div className="h-9 w-9" /> {/* Placeholder for loading */}
+          <div className="flex items-center gap-2">
+            <LibraryBig className="w-6 h-6" />
+            <Link href="/" className="text-xl font-bold">
+              Repositorio ESCOM
+            </Link>
+          </div>
+          <div className="h-9 w-9 animate-pulse bg-gray-200 rounded-full" />
         </div>
       </nav>
     );
@@ -286,7 +323,9 @@ function NavbarContent() {
 
           {/* Desktop User Menu - Hidden on mobile */}
           <div className="hidden md:flex">
-            {email && (
+            {isLoading ? (
+              <div className="h-9 w-9 animate-pulse bg-gray-200 rounded-full" />
+            ) : email ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
@@ -329,7 +368,7 @@ function NavbarContent() {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-            )}
+            ) : null}
           </div>
 
           {/* Mobile Menu */}
@@ -346,8 +385,10 @@ function NavbarContent() {
               </Button>
             )}
 
-            {/* Hamburger Menu for Mobile */}
-            {email && (
+            {/* User Menu/Auth Buttons for Mobile */}
+            {isLoading ? (
+              <div className="h-9 w-9 animate-pulse bg-gray-200 rounded-full" />
+            ) : email ? (
               <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
                 <SheetTrigger asChild>
                   <Button variant="ghost" size="icon" className="h-9 w-9">
@@ -363,7 +404,7 @@ function NavbarContent() {
                   <MobileUserMenu />
                 </SheetContent>
               </Sheet>
-            )}
+            ) : null}
           </div>
         </div>
 
