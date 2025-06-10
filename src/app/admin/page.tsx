@@ -8,7 +8,6 @@ import {
 import { fetchAnalyticsData } from "@/lib/analytics";
 import {
   UserGrowthChart,
-  MaterialsByTagChart,
   MaterialsByStatusChart,
   PopularMaterialsTable,
   TopAutoresList,
@@ -19,14 +18,12 @@ import {
   Users,
   FileText,
   Tags,
-  Heart,
   TrendingUp,
   Eye,
   Clock,
-  UserCheck,
 } from "lucide-react";
 import Link from "next/link";
-import PDFReportGenerator from "@/components/PDFReportGenerator";
+import CSVReportGenerator from "@/components/CSVReportGenerator";
 
 function StatCard({
   title,
@@ -130,7 +127,7 @@ export default async function Admin() {
           <h1 className="text-3xl font-bold tracking-tight">
             Panel de Administración
           </h1>
-          <PDFReportGenerator analyticsData={analyticsData} />
+          <CSVReportGenerator analyticsData={analyticsData} />
         </div>
         <p className="text-muted-foreground">
           Gestiona y monitorea el repositorio de materiales académicos
