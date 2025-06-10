@@ -13,6 +13,7 @@ import {
   TopAutoresList,
   TopCarrerasChart,
   TopSemestresChart,
+  MaterialsByCreatorTable,
 } from "@/components/Analytics/Charts";
 import {
   Users,
@@ -184,16 +185,16 @@ export default async function Admin() {
           <MaterialsByStatusChart data={analyticsData.materialsByStatus} />
         </div>
 
-        {/* Charts Row 3 - Detailed Analytics */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          <TopAutoresList data={analyticsData.detailedAnalytics.topAutores} />
+        {/* Charts Row 2 - Detailed Analytics */}
+        <div className="grid gap-6 md:grid-cols-2">
           <TopCarrerasChart data={analyticsData.detailedAnalytics.topCarreras} />
           <TopSemestresChart data={analyticsData.detailedAnalytics.topSemestres} />
         </div>
         
-        {/* Charts Row 2 - Distribution and Status */}
+        {/* Charts Row 3 - Distribution and Status */}
         <div className="grid gap-6 md:grid-cols-2">
           <PopularMaterialsTable data={analyticsData.popularMaterials} />
+          <MaterialsByCreatorTable data={analyticsData.materialsByCreator} />
         </div>
 
       </div>

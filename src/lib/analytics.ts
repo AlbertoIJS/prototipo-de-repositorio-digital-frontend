@@ -38,6 +38,8 @@ export interface AnalyticsData {
     draft: number;
     archived: number;
   };
+  // Add materials by creator data
+  materialsByCreator: MaterialsByCreator[];
   // Add detailed analytics data
   detailedAnalytics: DetailedAnalyticsData;
 }
@@ -59,15 +61,17 @@ export async function fetchAnalyticsData(): Promise<AnalyticsData> {
       fetch(`${process.env.NEXT_PUBLIC_API_URL}/usuarios`),
       fetch(`${process.env.NEXT_PUBLIC_API_URL}/Tags`),
       fetch(`${process.env.NEXT_PUBLIC_API_URL}/Materiales?userId=${userID}`),
+      fetch(`${process.env.NEXT_PUBLIC_API_URL}/Estadisticas/materiales-por-creador?limit=10`),
     ];
-    const [response, responseUsers, responseTags, responseMaterials] =
+    const [response, responseUsers, responseTags, responseMaterials, responseMaterialsByCreator] =
       await Promise.all(promises);
 
     if (
       !response.ok ||
       !responseUsers.ok ||
       !responseMaterials.ok ||
-      !responseTags.ok
+      !responseTags.ok ||
+      !responseMaterialsByCreator.ok
     ) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
@@ -76,17 +80,19 @@ export async function fetchAnalyticsData(): Promise<AnalyticsData> {
     const apiResponseUsers = await responseUsers.json();
     const apiResponseMaterials = await responseMaterials.json();
     const apiResponseTags = await responseTags.json();
+    const apiResponseMaterialsByCreator = await responseMaterialsByCreator.json();
 
     const data = apiResponse.data;
     const dataUsers = apiResponseUsers.data;
     const dataMaterials = apiResponseMaterials.data;
     const dataTags = apiResponseTags.data;
+    const dataMaterialsByCreator = apiResponseMaterialsByCreator.data;
 
     const totalUsers = dataUsers.length || 0;
     const totalMaterials = dataMaterials.length || 0;
     const totalTags = dataTags.length || 0;
 
-    console.log(dataMaterials);
+    console.log(dataMaterialsByCreator);
 
     // Calculate materials status distribution
     const materialsStatus = {
@@ -164,6 +170,7 @@ export async function fetchAnalyticsData(): Promise<AnalyticsData> {
       materialsByTag,
       popularMaterials,
       materialsByStatus,
+      materialsByCreator: dataMaterialsByCreator || [],
       detailedAnalytics,
     };
     return result;
@@ -189,6 +196,7 @@ export async function fetchAnalyticsData(): Promise<AnalyticsData> {
         draft: 0,
         archived: 0,
       },
+      materialsByCreator: [],
       detailedAnalytics: {
         resumen: {
           totalConsultasHistorico: 0,
@@ -300,6 +308,14 @@ export interface TopMaterial {
   disponible: boolean;
   totalConsultas: number;
   ultimaConsulta: string;
+  porcentajeDelTotal: number;
+}
+
+export interface MaterialsByCreator {
+  usuarioId: number;
+  nombreCompleto: string;
+  email: string;
+  cantidadMateriales: number;
   porcentajeDelTotal: number;
 }
 

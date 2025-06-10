@@ -30,6 +30,7 @@ import type {
   TopAutor,
   TopCarrera,
   TopSemestre,
+  MaterialsByCreator,
 } from "@/lib/analytics";
 
 export function MaterialsStatusChart({
@@ -449,5 +450,62 @@ export function TopSemestresChart({ data }: { data: TopSemestre[] }) {
         </CardContent>
       </Card>
     </ChartErrorBoundary>
+  );
+}
+
+export function MaterialsByCreatorTable({
+  data,
+}: {
+  data: MaterialsByCreator[];
+}) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <User className="h-5 w-5" />
+          Materiales por Creador
+        </CardTitle>
+        <CardDescription>
+          Usuarios con más materiales contribuidos
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          {data.map((creator, index) => (
+            <div
+              key={creator.usuarioId}
+              className="flex items-center justify-between p-3 rounded-lg border hover:shadow-sm transition-shadow"
+            >
+              <div className="flex items-center space-x-3">
+                <div className="flex-shrink-0">
+                  <Badge
+                    variant={index === 0 ? "default" : "secondary"}
+                    className={
+                      index === 0 ? "bg-yellow-500 text-yellow-50" : ""
+                    }
+                  >
+                    #{index + 1}
+                  </Badge>
+                </div>
+                <div className="flex-1">
+                  <p className="font-medium text-sm">{creator.nombreCompleto}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {creator.email}
+                  </p>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="font-bold text-lg">
+                  {creator.cantidadMateriales}
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  {creator.porcentajeDelTotal.toFixed(1)}% del total
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
   );
 }
