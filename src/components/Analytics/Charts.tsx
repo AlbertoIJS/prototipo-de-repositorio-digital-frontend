@@ -160,7 +160,7 @@ export function MaterialsByStatusChart({
   const chartData = [
     { name: "Publicados", value: data.published, color: "#00C49F" },
     { name: "Pendientes", value: data.draft, color: "#FFBB28" },
-    { name: "Ocultos", value: data.archived, color: "#FF8042" },
+    { name: "No disponible", value: data.archived, color: "#FF8042" },
   ];
 
   return (
@@ -395,6 +395,10 @@ export function TopSemestresChart({ data }: { data: TopSemestre[] }) {
     "#82ca9d",
   ];
 
+  // Calculate the maximum percentage value and add some padding
+  const maxPercentage = Math.max(...chartData.map(d => d.displayValue));
+  const yAxisMax = Math.min(100, Math.ceil(maxPercentage * 1.1)); // Add 10% padding but cap at 100%
+
   return (
     <ChartErrorBoundary>
       <Card>
@@ -419,8 +423,9 @@ export function TopSemestresChart({ data }: { data: TopSemestre[] }) {
                 height={80}
               />
               <YAxis 
-                tickFormatter={(value) => `${value}%`}
-                domain={[0, 'dataMax + 5']}
+                tickFormatter={(value) => `${value.toFixed(0)}%`}
+                domain={[0, yAxisMax]}
+                allowDecimals={false}
               />
               <Tooltip
                 formatter={(value, name) => [

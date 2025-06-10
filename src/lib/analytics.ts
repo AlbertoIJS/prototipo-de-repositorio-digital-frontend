@@ -58,15 +58,17 @@ export async function fetchAnalyticsData(): Promise<AnalyticsData> {
       fetch(`${process.env.NEXT_PUBLIC_API_URL}/Estadisticas`),
       fetch(`${process.env.NEXT_PUBLIC_API_URL}/usuarios`),
       fetch(`${process.env.NEXT_PUBLIC_API_URL}/Tags`),
-      fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/Materiales?userId=${userID}`
-      ),
+      fetch(`${process.env.NEXT_PUBLIC_API_URL}/Materiales?userId=${userID}`),
     ];
-    const [response, responseUsers, responseTags, responseMaterials] = await Promise.all(
-      promises
-    );
+    const [response, responseUsers, responseTags, responseMaterials] =
+      await Promise.all(promises);
 
-    if (!response.ok || !responseUsers.ok || !responseMaterials.ok || !responseTags.ok) {
+    if (
+      !response.ok ||
+      !responseUsers.ok ||
+      !responseMaterials.ok ||
+      !responseTags.ok
+    ) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
@@ -95,27 +97,14 @@ export async function fetchAnalyticsData(): Promise<AnalyticsData> {
 
     const materialsByStatus = {
       total: totalMaterials,
-      published: 0,
-      draft: 0,
-      archived: 0,
+      published: dataMaterials.filter(
+        (m: any) => m.status === 1 || m.disponible === 1
+      ).length,
+      draft: dataMaterials.filter((m: any) => m.status === 0).length,
+      archived: dataMaterials.filter(
+        (m: any) => m.disponible === 0 && m.status === 1
+      ).length,
     };
-
-    if (data.topMateriales) {
-      data.topMateriales.forEach((material: any) => {
-        if (material.disponible) {
-          materialsStatus.available++;
-          materialsByStatus.published++;
-        } else {
-          materialsStatus.unavailable++;
-          materialsByStatus.archived++;
-        }
-      });
-
-      // Estimate pending materials (materials not in top list)
-      const estimatedPendingMaterials = Math.floor(totalMaterials * 0.1);
-      materialsStatus.pending = estimatedPendingMaterials;
-      materialsByStatus.draft = estimatedPendingMaterials;
-    }
 
     // Generate materials by tag distribution using topMaterias
     const materialsByTag =
@@ -140,9 +129,8 @@ export async function fetchAnalyticsData(): Promise<AnalyticsData> {
         id: material.materialId,
         nombre: material.nombreMaterial,
         favoritos: Math.floor(material.totalConsultas * 0.1), // Estimate favorites as 10% of consultations
-        autores: dataMaterials.find(
-          (m: any) => m.id === material.materialId
-        )?.creadoPor,
+        autores: dataMaterials.find((m: any) => m.id === material.materialId)
+          ?.creadoPor,
         visualizaciones: material.totalConsultas,
       })) || [];
 
@@ -333,5 +321,3 @@ export interface DetailedAnalyticsData {
   topAutores: TopAutor[];
   topMateriales: TopMaterial[];
 }
-
-
