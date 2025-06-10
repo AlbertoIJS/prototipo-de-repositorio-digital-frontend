@@ -9,10 +9,11 @@ import { useSearchParams } from "next/navigation";
 import { fetchTags } from "@/lib/data";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
-import { X, ChevronDown, ChevronUp, Menu, Filter } from "lucide-react";
+import { X, Filter, Check } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { cn } from "@/lib/utils";
 
 interface JWTPayload {
   id: string;
@@ -53,11 +54,14 @@ function HomeContent() {
   const [loading, setLoading] = useState(true);
   const [userID, setUserID] = useState<string | null>(null);
   const [allTags, setAllTags] = useState<Tag[]>([]);
-  const [showAllTags, setShowAllTags] = useState(false);
-  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+
+  const [tagPopoverOpen, setTagPopoverOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [mobileTagFilter, setMobileTagFilter] = useState("");
   const router = useRouter();
   const searchParams = useSearchParams();
   const searchQuery = searchParams.get("q") || "";
+  const searchType = searchParams.get("searchType") || "material";
   const selectedTagsParam = searchParams.get("tags") || "";
   
   // Memoize selectedTagIds to prevent unnecessary re-renders
@@ -66,8 +70,16 @@ function HomeContent() {
     return selectedTagsParam.split(",").map(Number).filter(Boolean);
   }, [selectedTagsParam]);
 
-  // Initialize user authentication
+  // Initialize user authentication and mobile detection
   useEffect(() => {
+    // Mobile detection
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1024 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+
     const accessToken = getCookie("auth_token");
     
     if (!accessToken) {
@@ -88,6 +100,10 @@ function HomeContent() {
       console.error("Error decoding token:", error);
       router.push("/login");
     }
+
+    return () => {
+      window.removeEventListener('resize', checkMobile);
+    };
   }, [router]);
 
   // Fetch all available tags (only once)
@@ -106,15 +122,18 @@ function HomeContent() {
   }, []); // Only run once
 
   // Function to create search parameters based on query and selected tags
-  const createSearchParams = (query: string, tagIds: number[], userID: string) => {
+  const createSearchParams = (query: string, searchType: string, tagIds: number[], userID: string) => {
     const params = new URLSearchParams({
       userId: userID,
     });
 
-    // Add text search parameters (for material and author names)
+    // Add text search parameters based on search type
     if (query.trim()) {
-      params.append('materialNombre', query);
-      params.append('autorNombre', query);
+      if (searchType === "material") {
+        params.append('materialNombre', query);
+      } else if (searchType === "author") {
+        params.append('autorNombre', query);
+      }
     }
 
     // Add tag filter parameter (comma-separated tag IDs)
@@ -144,9 +163,6 @@ function HomeContent() {
     }
 
     router.push(`?${params.toString()}`);
-    
-    // Close mobile sidebar after selection
-    setIsMobileSidebarOpen(false);
   };
 
   // Handle tag removal
@@ -168,63 +184,99 @@ function HomeContent() {
     router.push("/");
   };
 
+  // Tag Filter Component with new UI
+  const TagFilterComponent = () => (
+    <div className="space-y-4">
+      {/* Tag Filter Card */}
+      <Card className="bg-white">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-medium flex items-center justify-between">
+            <span>Filtrar por categorías</span>
+            {selectedTagIds.length > 0 && (
+              <Badge variant="secondary">
+                {selectedTagIds.length} seleccionadas
+              </Badge>
+            )}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {/* Selected Tags Display */}
+          {selectedTagIds.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {allTags
+                .filter(tag => selectedTagIds.includes(tag.id))
+                .map((tag) => (
+                  <Badge key={tag.id} variant="secondary" className="gap-1 text-xs">
+                    {tag.nombre}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-auto p-0 hover:bg-transparent"
+                      onClick={() => handleTagRemove(tag.id)}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </Badge>
+                ))}
+            </div>
+          )}
+          
+                    {/* Tag Selector - Desktop Only */}
+          {!isMobile && (
+            <div className="relative">
+              <Popover open={tagPopoverOpen} onOpenChange={setTagPopoverOpen}>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background text-left focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent hover:bg-accent hover:text-accent-foreground"
+                    onClick={() => setTagPopoverOpen(!tagPopoverOpen)}
+                  >
+                    <span className="text-muted-foreground">Buscar categorías...</span>
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent 
+                  className="p-0 max-w-[270px]" 
+                  align="start" 
+                  side="bottom" 
+                  sideOffset={4}
+                >
+                  <Command>
+                    <CommandInput placeholder="Buscar categorías..." />
+                    <CommandList>
+                      <CommandEmpty>No se encontraron categorías.</CommandEmpty>
+                      <CommandGroup>
+                        {allTags.map((tag) => (
+                          <CommandItem
+                            key={tag.id}
+                            value={tag.nombre}
+                            onSelect={() => {
+                              handleTagToggle(tag.id);
+                              setTagPopoverOpen(false);
+                            }}
+                            className="flex items-center justify-between"
+                          >
+                            <span>{tag.nombre}</span>
+                            {selectedTagIds.includes(tag.id) && (
+                              <Check className="h-4 w-4 text-primary" />
+                            )}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                  </PopoverContent>
+                </Popover>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+
   // TagFilter Sidebar Component
   const TagFilterSidebar = ({ className = "" }: { className?: string }) => (
     <div className={`space-y-4 ${className}`}>
-      {/* Tag Filter Card */}
-      {allTags.length > 0 && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium flex items-center justify-between">
-              <span>Filtrar por categorías</span>
-              <div className="flex items-center gap-2">
-                {selectedTagIds.length > 0 && (
-                  <Badge variant="secondary">
-                    {selectedTagIds.length} seleccionadas
-                  </Badge>
-                )}
-                {allTags.length > 6 && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setShowAllTags(!showAllTags)}
-                    className="h-auto p-1 text-xs flex items-center gap-1"
-                  >
-                    {showAllTags ? (
-                      <>
-                        Mostrar menos <ChevronUp className="h-3 w-3" />
-                      </>
-                    ) : (
-                      <>
-                        Ver todas ({allTags.length}) <ChevronDown className="h-3 w-3" />
-                      </>
-                    )}
-                  </Button>
-                )}
-              </div>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {(showAllTags ? allTags : allTags.slice(0, 6)).map((tag) => (
-                <div key={tag.id} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={`tag-${tag.id}`}
-                    checked={selectedTagIds.includes(tag.id)}
-                    onCheckedChange={() => handleTagToggle(tag.id)}
-                  />
-                  <Label
-                    htmlFor={`tag-${tag.id}`}
-                    className="text-sm font-normal cursor-pointer flex-1 leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                  >
-                    {tag.nombre}
-                  </Label>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      <TagFilterComponent />
 
       {/* Clear filters button */}
       {hasFilters && (
@@ -244,6 +296,7 @@ function HomeContent() {
       console.log("Fetching materials with:", { 
         userID, 
         searchQuery, 
+        searchType,
         selectedTagIds: selectedTagIds.join(",") 
       });
       
@@ -253,7 +306,7 @@ function HomeContent() {
         
         if (searchQuery.trim() || selectedTagIds.length > 0) {
           // Use search endpoint when there's a search query or tag filters
-          const searchUrlParams = createSearchParams(searchQuery, selectedTagIds, userID);
+          const searchUrlParams = createSearchParams(searchQuery, searchType, selectedTagIds, userID);
           console.log("Search URL:", `${process.env.NEXT_PUBLIC_API_URL}/Materiales/Search?${searchUrlParams}`);
           
           response = await fetch(
@@ -292,7 +345,7 @@ function HomeContent() {
     };
 
     fetchMaterials();
-  }, [userID, searchQuery, selectedTagIds]); // Keep dependencies but selectedTagIds is now memoized
+  }, [userID, searchQuery, searchType, selectedTagIds]); // Keep dependencies but selectedTagIds is now memoized
 
   if (loading) {
     return (
@@ -309,17 +362,73 @@ function HomeContent() {
 
   return (
     <div className="flex-1 container mx-auto px-4 py-8">
+      {/* Mobile Tags Modal */}
+      {isMobile && tagPopoverOpen && (
+        <div className="fixed inset-0 z-50 bg-black/50">
+          <div className="fixed bottom-0 left-0 right-0 bg-white rounded-t-lg p-4 max-h-[80vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold">Seleccionar categorías</h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setTagPopoverOpen(false)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="mb-4">
+              <input
+                type="text"
+                placeholder="Buscar categorías..."
+                value={mobileTagFilter}
+                onChange={(e) => setMobileTagFilter(e.target.value)}
+                className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
+              />
+            </div>
+            <div className="space-y-2">
+              {allTags
+                .filter((tag) => 
+                  tag.nombre.toLowerCase().includes(mobileTagFilter.toLowerCase())
+                )
+                .map((tag) => (
+                <button
+                  key={tag.id}
+                  type="button"
+                  className={cn(
+                    "w-full px-3 py-2 text-sm text-left rounded-md border transition-colors",
+                    selectedTagIds.includes(tag.id)
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-background hover:bg-accent border-input"
+                  )}
+                  onClick={() => {
+                    handleTagToggle(tag.id);
+                    setTagPopoverOpen(false);
+                  }}
+                >
+                  <div className="flex items-center justify-between">
+                    <span>{tag.nombre}</span>
+                    {selectedTagIds.includes(tag.id) && (
+                      <Check className="h-4 w-4" />
+                    )}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col lg:flex-row gap-6">
         {/* Mobile Header with Hamburger Menu */}
         <div className="lg:hidden mb-4">
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-bold">
-              {hasFilters ? "Resultados de búsqueda" : "Más recientes"}
+              {hasFilters ? "Resultados de búsqueda" : "Más reciente"}
             </h1>
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
+              onClick={() => setTagPopoverOpen(true)}
               className="flex items-center gap-2"
             >
               <Filter className="h-4 w-4" />
@@ -338,7 +447,10 @@ function HomeContent() {
               <div className="flex flex-wrap items-center gap-2 mb-2">
                 {searchQuery && (
                   <Badge variant="outline" className="gap-1">
-                    <span className="text-xs">Búsqueda:</span> {searchQuery}
+                    <span className="text-xs">
+                      {searchType === "material" ? "Material:" : "Autor:"}
+                    </span> 
+                    {searchQuery}
                     <Button
                       variant="ghost"
                       size="sm"
@@ -346,6 +458,7 @@ function HomeContent() {
                       onClick={() => {
                         const params = new URLSearchParams(searchParams);
                         params.delete("q");
+                        params.delete("searchType");
                         router.push(`?${params.toString()}`);
                       }}
                     >
@@ -374,34 +487,13 @@ function HomeContent() {
           )}
         </div>
 
-        {/* Mobile Sidebar Overlay */}
-        {isMobileSidebarOpen && (
-          <div className="lg:hidden">
-            <div 
-              className="fixed inset-0 bg-black bg-opacity-50 z-40"
-              onClick={() => setIsMobileSidebarOpen(false)}
-            />
-            <div className="fixed inset-y-0 left-0 w-80 bg-white shadow-lg z-50 p-4 overflow-y-auto">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold">Filtros</h2>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setIsMobileSidebarOpen(false)}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-              <TagFilterSidebar />
-            </div>
-          </div>
-        )}
+
 
         {/* Desktop Sidebar */}
         <div className="hidden lg:block lg:w-80 lg:flex-shrink-0">
           <div className="sticky top-8">
             <h1 className="text-2xl font-bold mb-6">
-              {hasFilters ? "Resultados de búsqueda" : "Más recientes"}
+              {hasFilters ? "Resultados de búsqueda" : "Categorías"}
             </h1>
             
             {/* Active Filters Display - Desktop */}
@@ -410,7 +502,10 @@ function HomeContent() {
                 <div className="flex flex-wrap items-center gap-2 mb-2">
                   {searchQuery && (
                     <Badge variant="outline" className="gap-1">
-                      <span className="text-xs">Búsqueda:</span> {searchQuery}
+                      <span className="text-xs">
+                        {searchType === "material" ? "Material:" : "Autor:"}
+                      </span> 
+                      {searchQuery}
                       <Button
                         variant="ghost"
                         size="sm"
@@ -418,6 +513,7 @@ function HomeContent() {
                         onClick={() => {
                           const params = new URLSearchParams(searchParams);
                           params.delete("q");
+                          params.delete("searchType");
                           router.push(`?${params.toString()}`);
                         }}
                       >

@@ -7,7 +7,15 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Search, User } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
+import { Search, User, Menu, X } from "lucide-react";
 import { useEffect, useState, Suspense } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { jwtDecode } from "jwt-decode";
@@ -24,14 +32,19 @@ function NavbarContent() {
   const [email, setEmail] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchType, setSearchType] = useState<"material" | "author">("material");
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [showMobileSearch, setShowMobileSearch] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  // Initialize search query from URL params
+  // Initialize search query and type from URL params
   useEffect(() => {
     const query = searchParams.get("q") || "";
+    const type = searchParams.get("searchType") as "material" | "author" || "material";
     setSearchQuery(query);
+    setSearchType(type);
   }, [searchParams]);
 
   function handleSearch() {
@@ -40,8 +53,10 @@ function NavbarContent() {
     // Update or remove the search query
     if (searchQuery.trim()) {
       params.set("q", searchQuery);
+      params.set("searchType", searchType);
     } else {
       params.delete("q");
+      params.delete("searchType");
     }
     
     // Navigate to home if not already there, otherwise update current page
@@ -50,6 +65,9 @@ function NavbarContent() {
     } else {
       router.push(`?${params.toString()}`);
     }
+
+    // Close mobile search on submit
+    setShowMobileSearch(false);
   }
 
   function handleKeyPress(e: React.KeyboardEvent) {
@@ -129,7 +147,7 @@ function NavbarContent() {
   // Don't render user menu while loading
   if (isLoading) {
     return (
-      <nav className="w-full border-b">
+      <nav className="w-full border-b bg-white sticky top-0 z-50">
         <div className="container mx-auto px-4 py-3 flex justify-between items-center">
           <Link href="/" className="text-xl font-bold">
             Repositorio ESCOM
@@ -140,62 +158,180 @@ function NavbarContent() {
     );
   }
 
+  const getPlaceholderText = () => {
+    return searchType === "material" ? "Buscar materiales..." : "Buscar autores...";
+  };
+
+  const shouldShowSearch = pathname === "/" || searchQuery;
+
+  // Mobile User Menu Component
+  const MobileUserMenu = () => (
+    <div className="flex flex-col space-y-2 p-4 border-t">
+      <div className="text-sm text-gray-600 pb-2">{email}</div>
+      <Link 
+        href="/favoritos" 
+        className="block px-3 py-2 text-sm hover:bg-gray-100 rounded-md"
+        onClick={() => setIsMobileMenuOpen(false)}
+      >
+        Mis favoritos
+      </Link>
+      <Link 
+        href="/mis-materiales" 
+        className="block px-3 py-2 text-sm hover:bg-gray-100 rounded-md"
+        onClick={() => setIsMobileMenuOpen(false)}
+      >
+        Mis materiales
+      </Link>
+      <Link 
+        href="/admin/usuarios" 
+        className="block px-3 py-2 text-sm hover:bg-gray-100 rounded-md"
+        onClick={() => setIsMobileMenuOpen(false)}
+      >
+        Usuarios
+      </Link>
+      <Link 
+        href="/admin" 
+        className="block px-3 py-2 text-sm hover:bg-gray-100 rounded-md"
+        onClick={() => setIsMobileMenuOpen(false)}
+      >
+        Panel de administración
+      </Link>
+      <button
+        onClick={handleSignOut}
+        className="text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md"
+      >
+        Cerrar sesión
+      </button>
+    </div>
+  );
+
+  // Search Component
+  const SearchComponent = ({ isMobile = false }: { isMobile?: boolean }) => (
+    <div className={`flex items-center gap-2 ${isMobile ? 'w-full' : ''}`}>
+      <div className={`flex items-center rounded-md border ${isMobile ? 'flex-1' : ''}`}>
+        <Select value={searchType} onValueChange={(value: "material" | "author") => setSearchType(value)}>
+          <SelectTrigger className={`${isMobile ? 'w-28' : 'w-32'} border-0 border-r rounded-l-md rounded-r-none focus:ring-0`}>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="material">Materiales</SelectItem>
+            <SelectItem value="author">Autores</SelectItem>
+          </SelectContent>
+        </Select>
+        <Input 
+          type="text" 
+          placeholder={getPlaceholderText()}
+          className={`${isMobile ? 'flex-1' : 'w-64 md:w-80'} border-0 rounded-l-none rounded-r-md focus-visible:ring-0`}
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          onKeyPress={handleKeyPress}
+        />
+      </div>
+      <Button variant="outline" size="icon" onClick={handleSearch}>
+        <Search className="h-4 w-4" />
+      </Button>
+    </div>
+  );
+
   return (
-    <nav className="w-full border-b">
-      <div className="container mx-auto px-4 py-3 flex justify-between items-center">
-        <Link href="/" className="text-xl font-bold">
-          Repositorio ESCOM
-        </Link>
-        {(pathname === "/" || searchQuery) && (
-          <div className="flex items-center gap-2">
-            <Input 
-              type="text" 
-              placeholder="Buscar materiales o autores..." 
-              className="w-96" 
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyPress={handleKeyPress}
-            />
-            <Button variant="outline" size="icon" onClick={handleSearch}>
-              <Search className="h-5 w-5" />
-            </Button>
+    <nav className="w-full border-b bg-white sticky top-0 z-50">
+      <div className="container mx-auto px-4 py-3">
+        {/* Main navigation bar */}
+        <div className="flex justify-between items-center">
+          {/* Brand */}
+          <Link href="/" className="text-xl font-bold">
+            Repositorio ESCOM
+          </Link>
+
+          {/* Desktop Search - Hidden on mobile */}
+          {shouldShowSearch && (
+            <div className="hidden md:flex">
+              <SearchComponent />
+            </div>
+          )}
+
+          {/* Desktop User Menu - Hidden on mobile */}
+          <div className="hidden md:flex">
+            {email && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9 rounded-full"
+                  >
+                    <User className="h-5 w-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuItem disabled className="flex-col items-start">
+                    {email}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild className="flex-col items-start">
+                    <Link href="/favoritos">Mis favoritos</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild className="flex-col items-start">
+                    <Link href="/mis-materiales">Mis materiales</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild className="flex-col items-start">
+                    <Link href="/admin/usuarios">Usuarios</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild className="flex-col items-start">
+                    <Link href="/admin">Panel de administración</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={handleSignOut}
+                    className="text-red-600"
+                  >
+                    Cerrar sesión
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
-        )}
-        {email && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
+
+          {/* Mobile Menu */}
+          <div className="flex md:hidden items-center gap-2">
+            {/* Search Button for Mobile */}
+            {shouldShowSearch && (
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-9 w-9 rounded-full"
+                onClick={() => setShowMobileSearch(!showMobileSearch)}
+                className="h-9 w-9"
               >
-                <User className="h-5 w-5" />
+                <Search className="h-4 w-4" />
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuItem disabled className="flex-col items-start">
-                {email}
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild className="flex-col items-start">
-                <Link href="/favoritos">Mis favoritos</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild className="flex-col items-start">
-                <Link href="/mis-materiales">Mis materiales</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild className="flex-col items-start">
-                <Link href="/admin/usuarios">Usuarios</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild className="flex-col items-start">
-                <Link href="/admin">Panel de administración</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={handleSignOut}
-                className="text-red-600"
-              >
-                Cerrar sesión
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+            )}
+
+            {/* Hamburger Menu for Mobile */}
+            {email && (
+              <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+                <SheetTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9"
+                  >
+                    <Menu className="h-5 w-5" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="right" className="w-80">
+                  <div className="flex items-center justify-between mb-4">
+                    <SheetTitle className="text-lg font-semibold">Menú</SheetTitle>
+                  </div>
+                  <MobileUserMenu />
+                </SheetContent>
+              </Sheet>
+            )}
+          </div>
+        </div>
+
+        {/* Mobile Search Bar - Shows when search button is clicked */}
+        {shouldShowSearch && showMobileSearch && (
+          <div className="md:hidden mt-3 pt-3 border-t">
+            <SearchComponent isMobile />
+          </div>
         )}
       </div>
     </nav>
@@ -205,7 +341,7 @@ function NavbarContent() {
 export function Navbar() {
   return (
     <Suspense fallback={
-      <nav className="w-full border-b">
+      <nav className="w-full border-b bg-white sticky top-0 z-50">
         <div className="container mx-auto px-4 py-3 flex justify-between items-center">
           <Link href="/" className="text-xl font-bold">
             Repositorio ESCOM
