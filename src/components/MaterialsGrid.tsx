@@ -47,8 +47,6 @@ export default function MaterialsGrid({
   userRole?: string;
   userID?: string;
 }) {
-  console.log("Materials:", materials);
-
   // Role-based permissions
   const isStudent = userRole === "1";
   const isProfessor = userRole === "2";
