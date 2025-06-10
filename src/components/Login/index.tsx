@@ -26,7 +26,6 @@ import { useRouter } from "next/navigation";
 import { signin } from "@/lib/data";
 import { toast } from "sonner";
 import Link from "next/link";
-import { setCookie } from "@/lib/cookies";
 
 const FormSchema = z.object({
   email: z.string().email({ message: "Correo inválido" }),

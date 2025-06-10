@@ -24,17 +24,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ChartErrorBoundary } from "./ErrorBoundary";
-import {
-  Activity,
-  Clock,
-  Eye,
-  FileText,
-  Users,
-  Heart,
-  GraduationCap,
-  BookOpen,
-  User,
-} from "lucide-react";
+import { Eye, GraduationCap, BookOpen, User } from "lucide-react";
 import type {
   AnalyticsData,
   TopAutor,
@@ -190,8 +180,6 @@ export function MaterialsByStatusChart({
   );
 }
 
-
-
 export function PopularMaterialsTable({
   data,
 }: {
@@ -266,23 +254,34 @@ export function TopAutoresList({ data }: { data: TopAutor[] }) {
               >
                 <div className="flex items-center space-x-3">
                   <div className="flex-shrink-0">
-                    <Badge 
+                    <Badge
                       variant={index === 0 ? "default" : "secondary"}
-                      className={index === 0 ? "bg-yellow-500 text-yellow-50" : ""}
+                      className={
+                        index === 0 ? "bg-yellow-500 text-yellow-50" : ""
+                      }
                     >
                       #{index + 1}
                     </Badge>
                   </div>
                   <div className="flex-1">
-                    <p className="font-medium text-sm">{autor.nombreCompleto}</p>
-                    <p className="text-xs text-muted-foreground">{autor.email}</p>
+                    <p className="font-medium text-sm">
+                      {autor.nombreCompleto}
+                    </p>
                     <p className="text-xs text-muted-foreground">
-                      Última consulta: {new Date(autor.ultimaConsulta).toLocaleDateString('es-ES')}
+                      {autor.email}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Última consulta:{" "}
+                      {new Date(autor.ultimaConsulta).toLocaleDateString(
+                        "es-ES"
+                      )}
                     </p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="font-bold text-lg">{autor.totalConsultas.toLocaleString()}</div>
+                  <div className="font-bold text-lg">
+                    {autor.totalConsultas.toLocaleString()}
+                  </div>
                   <div className="text-xs text-muted-foreground">
                     {autor.porcentajeDelTotal.toFixed(1)}% del total
                   </div>
@@ -313,11 +312,11 @@ export function TopCarrerasChart({ data }: { data: TopCarrera[] }) {
     return (
       <div className="flex flex-wrap gap-2 justify-center mt-4">
         {payload.map((entry: any, index: number) => {
-          const item = chartData.find(d => d.name === entry.value);
+          const item = chartData.find((d) => d.name === entry.value);
           return (
             <div key={index} className="flex items-center gap-2 text-sm">
-              <div 
-                className="w-3 h-3 rounded-full" 
+              <div
+                className="w-3 h-3 rounded-full"
                 style={{ backgroundColor: entry.color }}
               />
               <span className="text-muted-foreground">
@@ -396,7 +395,7 @@ export function TopSemestresChart({ data }: { data: TopSemestre[] }) {
   ];
 
   // Calculate the maximum percentage value and add some padding
-  const maxPercentage = Math.max(...chartData.map(d => d.displayValue));
+  const maxPercentage = Math.max(...chartData.map((d) => d.displayValue));
   const yAxisMax = Math.min(100, Math.ceil(maxPercentage * 1.1)); // Add 10% padding but cap at 100%
 
   return (
@@ -422,14 +421,14 @@ export function TopSemestresChart({ data }: { data: TopSemestre[] }) {
                 textAnchor="end"
                 height={80}
               />
-              <YAxis 
+              <YAxis
                 tickFormatter={(value) => `${value.toFixed(0)}%`}
                 domain={[0, yAxisMax]}
                 allowDecimals={false}
               />
               <Tooltip
                 formatter={(value, name) => [
-                  `${Number(value).toFixed(1)}% (${chartData.find(d => d.displayValue === value)?.totalConsultas || 0} consultas)`,
+                  `${Number(value).toFixed(1)}% (${chartData.find((d) => d.displayValue === value)?.totalConsultas || 0} consultas)`,
                   "Porcentaje del Total",
                 ]}
                 labelFormatter={(label) => {

@@ -45,6 +45,7 @@ interface Tag {
 interface Material {
   id: number;
   nombre: string;
+  creadorId: number;
   url: string;
   status: number;
   disponible?: number;

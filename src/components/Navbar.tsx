@@ -20,7 +20,7 @@ import {
   SheetTrigger,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { Search, User, Menu, X, LibraryBig } from "lucide-react";
+import { Search, User, Menu, LibraryBig } from "lucide-react";
 import { useEffect, useState, Suspense } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { jwtDecode } from "jwt-decode";
@@ -181,7 +181,6 @@ function NavbarContent() {
   const shouldShowSearch = pathname === "/" || searchQuery;
 
   // Role-based permissions
-  const isStudent = userRole === "1";
   const isProfessor = userRole === "2";
   const isAdmin = userRole === "3";
 

@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "./ui/button";
 import { formatDate } from "@/lib/utils";
-import { Edit, Trash2 } from "lucide-react";
+import { Edit } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import DeleteBookmark from "./DeleteBookmark";
