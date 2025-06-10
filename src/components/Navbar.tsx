@@ -31,10 +31,12 @@ import { Input } from "./ui/input";
 interface JWTPayload {
   id: string;
   email: string;
+  rol: string;
 }
 
 function NavbarContent() {
   const [email, setEmail] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchType, setSearchType] = useState<"material" | "author">(
@@ -116,15 +118,19 @@ function NavbarContent() {
           console.log("Decoded user data:", {
             id: decoded.id,
             email: decoded.email,
+            rol: decoded.rol,
           });
           setEmail(decoded.email);
+          setUserRole(decoded.rol);
         } else {
           console.log("No token found, user not authenticated");
           setEmail(null);
+          setUserRole(null);
         }
       } catch (error) {
         console.error("Error decoding token in navbar:", error);
         setEmail(null);
+        setUserRole(null);
 
         // If token is invalid, clean up
         deleteCookie("auth_token");
@@ -174,10 +180,17 @@ function NavbarContent() {
 
   const shouldShowSearch = pathname === "/" || searchQuery;
 
+  // Role-based permissions
+  const isStudent = userRole === "1";
+  const isProfessor = userRole === "2";
+  const isAdmin = userRole === "3";
+
   // Mobile User Menu Component
   const MobileUserMenu = () => (
     <div className="flex flex-col space-y-2 p-4 border-t">
       <div className="text-sm text-gray-600 pb-2">{email}</div>
+      
+      {/* Favoritos - Available for all roles (students, professors, admins) */}
       <Link
         href="/favoritos"
         className="block px-3 py-2 text-sm hover:bg-gray-100 rounded-md"
@@ -185,27 +198,29 @@ function NavbarContent() {
       >
         Mis favoritos
       </Link>
-      <Link
-        href="/mis-materiales"
-        className="block px-3 py-2 text-sm hover:bg-gray-100 rounded-md"
-        onClick={() => setIsMobileMenuOpen(false)}
-      >
-        Mis materiales
-      </Link>
-      <Link
-        href="/admin/usuarios"
-        className="block px-3 py-2 text-sm hover:bg-gray-100 rounded-md"
-        onClick={() => setIsMobileMenuOpen(false)}
-      >
-        Usuarios
-      </Link>
-      <Link
-        href="/admin"
-        className="block px-3 py-2 text-sm hover:bg-gray-100 rounded-md"
-        onClick={() => setIsMobileMenuOpen(false)}
-      >
-        Panel de administración
-      </Link>
+      
+      {/* Mis materiales - Only for professors and admins */}
+      {(isProfessor || isAdmin) && (
+        <Link
+          href="/mis-materiales"
+          className="block px-3 py-2 text-sm hover:bg-gray-100 rounded-md"
+          onClick={() => setIsMobileMenuOpen(false)}
+        >
+          Mis materiales
+        </Link>
+      )}
+      
+      {/* Panel de administración - Only for admins */}
+      {isAdmin && (
+        <Link
+          href="/admin"
+          className="block px-3 py-2 text-sm hover:bg-gray-100 rounded-md"
+          onClick={() => setIsMobileMenuOpen(false)}
+        >
+          Panel de administración
+        </Link>
+      )}
+      
       <button
         onClick={handleSignOut}
         className="text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md"
@@ -287,18 +302,26 @@ function NavbarContent() {
                   <DropdownMenuItem disabled className="flex-col items-start">
                     {email}
                   </DropdownMenuItem>
+                  
+                  {/* Favoritos - Available for all roles (students, professors, admins) */}
                   <DropdownMenuItem asChild className="flex-col items-start">
                     <Link href="/favoritos">Mis favoritos</Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem asChild className="flex-col items-start">
-                    <Link href="/mis-materiales">Mis materiales</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild className="flex-col items-start">
-                    <Link href="/admin/usuarios">Usuarios</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild className="flex-col items-start">
-                    <Link href="/admin">Panel de administración</Link>
-                  </DropdownMenuItem>
+                  
+                  {/* Mis materiales - Only for professors and admins */}
+                  {(isProfessor || isAdmin) && (
+                    <DropdownMenuItem asChild className="flex-col items-start">
+                      <Link href="/mis-materiales">Mis materiales</Link>
+                    </DropdownMenuItem>
+                  )}
+                  
+                  {/* Panel de administración - Only for admins */}
+                  {isAdmin && (
+                    <DropdownMenuItem asChild className="flex-col items-start">
+                      <Link href="/admin">Panel de administración</Link>
+                    </DropdownMenuItem>
+                  )}
+                  
                   <DropdownMenuItem
                     onClick={handleSignOut}
                     className="text-red-600"
