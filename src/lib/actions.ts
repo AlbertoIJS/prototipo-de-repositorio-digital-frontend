@@ -18,6 +18,16 @@ export type State = {
     archivo?: string[];
     url?: string[];
     materialType?: string[];
+    'autores.0.nombre'?: string[];
+    'autores.0.apellidoP'?: string[];
+    'autores.0.apellidoM'?: string[];
+    'autores.0.email'?: string[];
+    'autores.1.nombre'?: string[];
+    'autores.1.apellidoP'?: string[];
+    'autores.1.apellidoM'?: string[];
+    'autores.1.email'?: string[];
+    // Add more author fields as needed
+    [key: string]: string[] | undefined;
   };
   message: string | null;
   status?: number;
@@ -38,18 +48,42 @@ export type UserState = {
 };
 
 const AutorSchema = z.object({
-  nombre: z.string().min(1, "El nombre es requerido"),
-  apellidoP: z.string().min(1, "El apellido paterno es requerido"),
-  apellidoM: z.string().min(1, "El apellido materno es requerido"),
-  email: z.string().email("Email inválido"),
+  nombre: z.string()
+    .min(1, "El nombre es requerido")
+    .min(2, "El nombre debe tener al menos 2 caracteres")
+    .max(50, "El nombre no puede exceder 50 caracteres")
+    .regex(/^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s]+$/, "El nombre solo puede contener letras"),
+  apellidoP: z.string()
+    .min(1, "El apellido paterno es requerido")
+    .min(2, "El apellido paterno debe tener al menos 2 caracteres")
+    .max(50, "El apellido paterno no puede exceder 50 caracteres")
+    .regex(/^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s]+$/, "El apellido paterno solo puede contener letras"),
+  apellidoM: z.string()
+    .min(1, "El apellido materno es requerido")
+    .min(2, "El apellido materno debe tener al menos 2 caracteres")
+    .max(50, "El apellido materno no puede exceder 50 caracteres")
+    .regex(/^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s]+$/, "El apellido materno solo puede contener letras"),
+  email: z.string()
+    .min(1, "El email es requerido")
+    .email("El formato del email no es válido")
+    .max(100, "El email no puede exceder 100 caracteres"),
 });
 
 const MaterialSchema = z.object({
-  nombreMaterial: z.string().min(1, "El nombre del material es requerido"),
-  autores: z.array(AutorSchema).min(1, "Se requiere al menos un autor"),
-  tagIds: z.array(z.number()).min(1, "Se requiere al menos un tag"),
+  nombreMaterial: z.string()
+    .min(1, "El nombre del material es requerido")
+    .min(3, "El nombre debe tener al menos 3 caracteres")
+    .max(200, "El nombre no puede exceder 200 caracteres")
+    .trim(),
+  autores: z.array(AutorSchema)
+    .min(1, "Se requiere al menos un autor")
+    .max(10, "No se pueden agregar más de 10 autores"),
+  tagIds: z.array(z.number().positive("Los IDs de tags deben ser números positivos"))
+    .min(1, "Se requiere al menos un tag")
+    .max(15, "No se pueden seleccionar más de 15 tags"),
   materialType: z.enum(["file", "url"], {
     required_error: "Debe seleccionar el tipo de material",
+    invalid_type_error: "El tipo de material debe ser 'file' o 'url'",
   }),
 });
 
@@ -68,11 +102,61 @@ export async function createMaterial(
     };
   }
 
-  const userID = jwtDecode(token).sub;
+  const userID = jwtDecode<JWTPayload>(token).id;
 
   const materialType = formData.get("materialType") as string;
   const archivo = formData.get("archivo") as File;
   const url = formData.get("url") as string;
+
+  // Parse and validate authors array
+  let autoresData;
+  try {
+    const autoresString = formData.get("autores") as string;
+    autoresData = JSON.parse(autoresString || "[]");
+  } catch {
+    return {
+      errors: {
+        autores: ["Los datos de autores no son válidos"],
+      },
+      message: "Error: Los datos de autores no son válidos",
+      status: 400,
+    };
+  }
+
+  // Parse and validate tag IDs array
+  let tagIdsData;
+  try {
+    const tagIdsString = formData.get("tagIds") as string;
+    tagIdsData = JSON.parse(tagIdsString || "[]");
+  } catch {
+    return {
+      errors: {
+        tagIds: ["Los datos de tags no son válidos"],
+      },
+      message: "Error: Los datos de tags no son válidos",
+      status: 400,
+    };
+  }
+
+  const formValues = {
+    nombreMaterial: formData.get("nombreMaterial") as string,
+    autores: autoresData,
+    tagIds: tagIdsData,
+    materialType: materialType,
+  };
+
+  // Validate basic form fields first
+  const validateFields = MaterialSchema.safeParse(formValues);
+
+  if (!validateFields.success) {
+    const fieldErrors = validateFields.error.flatten().fieldErrors;
+    
+    return {
+      errors: fieldErrors,
+      message: "Error en los campos del formulario. Por favor, corrige los errores.",
+      status: 400,
+    };
+  }
 
   // Validate that either file or URL is provided based on materialType
   if (materialType === "file") {
@@ -85,6 +169,31 @@ export async function createMaterial(
         status: 400,
       };
     }
+    
+    // Validate file type and size
+    const allowedTypes = ["application/pdf", "application/zip"];
+    if (!allowedTypes.includes(archivo.type)) {
+      return {
+        errors: {
+          archivo: ["Solo se permiten archivos PDF y ZIP"],
+        },
+        message: "Error: Formato de archivo no válido",
+        status: 400,
+      };
+    }
+    
+    // Validate file size (max 50MB)
+    const maxSize = 50 * 1024 * 1024; // 50MB in bytes
+    if (archivo.size > maxSize) {
+      return {
+        errors: {
+          archivo: ["El archivo no puede exceder 50MB"],
+        },
+        message: "Error: El archivo es demasiado grande",
+        status: 400,
+      };
+    }
+    
   } else if (materialType === "url") {
     if (!url || url.trim() === "") {
       return {
@@ -95,13 +204,23 @@ export async function createMaterial(
         status: 400,
       };
     }
-    // Basic URL validation
+    
+    // Enhanced URL validation
     try {
-      new URL(url);
+      const urlObj = new URL(url);
+      if (!['http:', 'https:'].includes(urlObj.protocol)) {
+        return {
+          errors: {
+            url: ["La URL debe usar protocolo HTTP o HTTPS"],
+          },
+          message: "Error: Protocolo de URL no válido",
+          status: 400,
+        };
+      }
     } catch {
       return {
         errors: {
-          url: ["La URL no es válida"],
+          url: ["La URL no tiene un formato válido"],
         },
         message: "Error: La URL no es válida",
         status: 400,
@@ -117,32 +236,15 @@ export async function createMaterial(
     };
   }
 
-  const formValues = {
-    nombreMaterial: formData.get("nombreMaterial"),
-    autores: JSON.parse((formData.get("autores") as string) || "[]"),
-    tagIds: JSON.parse((formData.get("tagIds") as string) || "[]"),
-    materialType: materialType,
-  };
-
-  const validateFields = MaterialSchema.safeParse(formValues);
-
-  if (!validateFields.success) {
-    return {
-      errors: validateFields.error.flatten().fieldErrors,
-      message: "Error en los campos. No se pudo crear el material.",
-      status: 400,
-    };
-  }
-
   try {
     // Create a new FormData instance for the API call
     const apiFormData = new FormData();
 
     // Add the datosJson field with the stringified data
     const datosJson = JSON.stringify({
-      nombreMaterial: formValues.nombreMaterial,
-      autores: formValues.autores,
-      tagIds: formValues.tagIds,
+      nombreMaterial: validateFields.data.nombreMaterial,
+      autores: validateFields.data.autores,
+      tagIds: validateFields.data.tagIds,
     });
 
     apiFormData.append("datosJson", datosJson);
@@ -166,9 +268,15 @@ export async function createMaterial(
     );
 
     const resjson = await response.json();
-    console.log(resjson);
 
     if (!response.ok) {
+      // Handle API-specific errors
+      if (response.status === 400) {
+        return {
+          message: resjson.message || "Error de validación en el servidor",
+          status: response.status,
+        };
+      }
       throw new Error("Error al crear el material");
     }
 
@@ -177,8 +285,9 @@ export async function createMaterial(
       status: response.status,
     };
   } catch (error) {
+    console.error("Error creating material:", error);
     return {
-      message: "Error al crear el material",
+      message: "Error interno del servidor. Por favor, inténtalo de nuevo.",
       status: 500,
     };
   }
