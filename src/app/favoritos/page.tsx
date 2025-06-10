@@ -11,8 +11,6 @@ export default async function FavoritosPage() {
   const userID = decodedToken.id;
   const userRole = decodedToken.rol;
 
-  console.log(decodedToken);
-
   if (!userID) {
     return <div>No estás autenticado</div>;
   }
@@ -25,7 +23,7 @@ export default async function FavoritosPage() {
       {favorites.length === 0 ? (
         <p className="text-muted-foreground mt-4">Aún no tienes favoritos</p>
       ) : (
-        <MaterialsGrid userRole={userRole} materials={favorites.data} />
+        <MaterialsGrid userRole={userRole} userID={userID} materials={favorites.data} />
       )}
     </main>
   );

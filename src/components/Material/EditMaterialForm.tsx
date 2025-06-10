@@ -182,7 +182,7 @@ export default function EditMaterialForm({
 
   return (
     <main className="p-6 container mx-auto">
-      <form action={formAction} className="grid gap-6 max-w-4xl mx-auto">
+      <form action={formAction} className="grid gap-6 max-w-4xl mx-auto" noValidate>
         <div className="flex justify-between items-center">
           <h1 className="text-2xl font-bold mb-4">Editar material</h1>
           <div className="flex items-center space-x-6">

@@ -1,5 +1,6 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "./ui/button";
 import { formatDate } from "@/lib/utils";
@@ -7,6 +8,7 @@ import { Edit } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import DeleteBookmark from "./DeleteBookmark";
+import BookmarkButton from "./Bookmark";
 
 interface Author {
   id: number;
@@ -47,6 +49,9 @@ export default function MaterialsGrid({
   userRole?: string;
   userID?: string;
 }) {
+  const pathName = usePathname();
+  const isFavoritesPage = pathName.includes("/favoritos");
+
   // Role-based permissions
   const isStudent = userRole === "1";
   const isProfessor = userRole === "2";
@@ -154,86 +159,57 @@ export default function MaterialsGrid({
               </p>
 
               <div className="flex flex-col gap-2 mt-6">
-                {/* Student role (1): Only show "Ir al material" button */}
-                {isStudent && (
-                  <div className="flex justify-between items-center gap-2">
-                    <Button asChild type="button" size="sm">
-                      <Link
-                        href={`/material/${material.id}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        Ir al material
+                {/* Show "Ir al material" button to everyone */}
+                <div className="flex items-center gap-2">
+                  <Button asChild type="button" size="sm" className="flex-1">
+                    <Link
+                      href={`/material/${material.id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Ir al material
+                    </Link>
+                  </Button>
+                  {/* Show BookmarkButton to everyone in /favoritos */}
+                  {isFavoritesPage && userID && (
+                    <BookmarkButton
+                      userID={userID}
+                      materialId={material.id}
+                      isFavorite={true}
+                    />
+                  )}
+                </div>
+                {/* Professor role (2): Show "Editar material" button when not in favorites */}
+                {isProfessor && !isFavoritesPage && material.status !== 0 && (
+                  <Button
+                    asChild
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                  >
+                    <Link href={`/editar-material/${material.id}`}>
+                      <Edit className="size-4 mr-2" />
+                      Editar material
+                    </Link>
+                  </Button>
+                )}
+
+                {/* Admin role (3): Show admin buttons when not in favorites */}
+                {isAdmin && !isFavoritesPage && (
+                  <div className="flex gap-2">
+                    <Button
+                      asChild
+                      variant="outline"
+                      size="sm"
+                      className="flex-1"
+                    >
+                      <Link href={`/admin/editar-material/${material.id}`}>
+                        <Edit className="size-4 mr-2" />
+                        Editar material
                       </Link>
                     </Button>
+                    <DeleteBookmark materialId={material.id} />
                   </div>
-                )}
-
-                {/* Professor role (2): Show "Ir al material" and "Editar material" buttons */}
-                {isProfessor && (
-                  <>
-                    <div className="flex justify-between items-center gap-2">
-                      <Button asChild type="button" size="sm">
-                        <Link
-                          href={`/material/${material.id}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          Ir al material
-                        </Link>
-                      </Button>
-                    </div>
-                    {material.status !== 0 && (
-                      <Button
-                        asChild
-                        variant="outline"
-                        size="sm"
-                        className="w-full"
-                      >
-                        <Link href={`/editar-material/${material.id}`}>
-                          <Edit className="size-4 mr-2" />
-                          Editar material
-                        </Link>
-                      </Button>
-                    )}
-                  </>
-                )}
-
-                {/* Admin role (3): Show all buttons including delete */}
-                {isAdmin && (
-                  <>
-                    <div className="flex justify-between items-center gap-2">
-                      <Button asChild type="button" size="sm">
-                        <Link
-                          href={`/material/${material.id}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="w-full"
-                        >
-                          Ir al material
-                        </Link>
-                      </Button>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        asChild
-                        variant="outline"
-                        size="sm"
-                        className="flex-1"
-                      >
-                        <Link href={`/admin/editar-material/${material.id}`}>
-                          <Edit className="size-4 mr-2" />
-                          Editar material
-                        </Link>
-                      </Button>
-                      {isAdmin && userID && (
-                        <DeleteBookmark
-                          userID={userID}
-                          materialId={material.id}
-                        />
-                      )}
-                    </div>
-                  </>
                 )}
               </div>
             </div>

@@ -533,6 +533,33 @@ export async function updateUser(
   }
 }
 
+export async function removeMaterial(materialId: number) {
+  try {
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/Materiales/${materialId}`,
+      {
+        method: "DELETE",
+      }
+    );
+    if (!response.ok) {
+      throw new Error("Error al eliminar el material");
+    }
+
+    revalidatePath(`/`);
+    revalidatePath(`/admin/materiales`);
+    return {
+      message: "Material eliminado exitosamente",
+      status: response.status,
+    };
+  } catch (error) {
+    return {
+      message: "Error al eliminar el material",
+      status: 500,
+    };
+  }
+}
+
+
 export async function removeFromFavorites(userId: string, materialId: number) {
   const userID = Number(userId);
   try {
