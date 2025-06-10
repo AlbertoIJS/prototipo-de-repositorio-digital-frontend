@@ -27,7 +27,12 @@ import z from "zod";
 import { useRouter } from "next/navigation";
 
 const FormSchema = z.object({
-  email: z.string().email({ message: "Correo inválido" }),
+  email: z
+    .string()
+    .email({ message: "Correo inválido" })
+    .refine((val) => val.includes("@") && val.split("@")[1]?.includes("ipn.mx"), {
+      message: "El correo debe ser del dominio ipn.mx",
+    }),
   name: z
     .string()
     .min(3, { message: "El nombre debe tener al menos 3 caracteres" }),

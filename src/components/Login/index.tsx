@@ -28,7 +28,15 @@ import { toast } from "sonner";
 import Link from "next/link";
 
 const FormSchema = z.object({
-  email: z.string().email({ message: "Correo inválido" }),
+  email: z
+    .string()
+    .email({ message: "Correo inválido" })
+    .refine(
+      (val) => val.includes("@") && val.split("@")[1]?.includes("ipn.mx"),
+      {
+        message: "El correo debe ser del dominio ipn.mx",
+      }
+    ),
 });
 
 export function LoginForm({
@@ -55,7 +63,7 @@ export function LoginForm({
     console.log(res);
 
     if (res.ok) {
-      localStorage.setItem("userID", res.data.data.id); 
+      localStorage.setItem("userID", res.data.data.id);
       router.push("/verificar");
     } else {
       toast.error("Verifica tu correo e intenta nuevamente");
