@@ -14,8 +14,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
-import { Search, User, Menu, X } from "lucide-react";
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { Search, User, Menu, X, LibraryBig } from "lucide-react";
 import { useEffect, useState, Suspense } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { jwtDecode } from "jwt-decode";
@@ -32,7 +37,9 @@ function NavbarContent() {
   const [email, setEmail] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchType, setSearchType] = useState<"material" | "author">("material");
+  const [searchType, setSearchType] = useState<"material" | "author">(
+    "material"
+  );
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showMobileSearch, setShowMobileSearch] = useState(false);
   const router = useRouter();
@@ -42,14 +49,15 @@ function NavbarContent() {
   // Initialize search query and type from URL params
   useEffect(() => {
     const query = searchParams.get("q") || "";
-    const type = searchParams.get("searchType") as "material" | "author" || "material";
+    const type =
+      (searchParams.get("searchType") as "material" | "author") || "material";
     setSearchQuery(query);
     setSearchType(type);
   }, [searchParams]);
 
   function handleSearch() {
     const params = new URLSearchParams(searchParams);
-    
+
     // Update or remove the search query
     if (searchQuery.trim()) {
       params.set("q", searchQuery);
@@ -58,7 +66,7 @@ function NavbarContent() {
       params.delete("q");
       params.delete("searchType");
     }
-    
+
     // Navigate to home if not already there, otherwise update current page
     if (pathname !== "/") {
       router.push(`/?${params.toString()}`);
@@ -159,7 +167,9 @@ function NavbarContent() {
   }
 
   const getPlaceholderText = () => {
-    return searchType === "material" ? "Buscar materiales..." : "Buscar autores...";
+    return searchType === "material"
+      ? "Buscar materiales..."
+      : "Buscar autores...";
   };
 
   const shouldShowSearch = pathname === "/" || searchQuery;
@@ -168,29 +178,29 @@ function NavbarContent() {
   const MobileUserMenu = () => (
     <div className="flex flex-col space-y-2 p-4 border-t">
       <div className="text-sm text-gray-600 pb-2">{email}</div>
-      <Link 
-        href="/favoritos" 
+      <Link
+        href="/favoritos"
         className="block px-3 py-2 text-sm hover:bg-gray-100 rounded-md"
         onClick={() => setIsMobileMenuOpen(false)}
       >
         Mis favoritos
       </Link>
-      <Link 
-        href="/mis-materiales" 
+      <Link
+        href="/mis-materiales"
         className="block px-3 py-2 text-sm hover:bg-gray-100 rounded-md"
         onClick={() => setIsMobileMenuOpen(false)}
       >
         Mis materiales
       </Link>
-      <Link 
-        href="/admin/usuarios" 
+      <Link
+        href="/admin/usuarios"
         className="block px-3 py-2 text-sm hover:bg-gray-100 rounded-md"
         onClick={() => setIsMobileMenuOpen(false)}
       >
         Usuarios
       </Link>
-      <Link 
-        href="/admin" 
+      <Link
+        href="/admin"
         className="block px-3 py-2 text-sm hover:bg-gray-100 rounded-md"
         onClick={() => setIsMobileMenuOpen(false)}
       >
@@ -207,10 +217,17 @@ function NavbarContent() {
 
   // Search Component
   const SearchComponent = ({ isMobile = false }: { isMobile?: boolean }) => (
-    <div className={`flex items-center gap-2 ${isMobile ? 'w-full' : ''}`}>
-      <div className={`flex items-center rounded-md border ${isMobile ? 'flex-1' : ''}`}>
-        <Select value={searchType} onValueChange={(value: "material" | "author") => setSearchType(value)}>
-          <SelectTrigger className={`${isMobile ? 'w-28' : 'w-32'} border-0 border-r rounded-l-md rounded-r-none focus:ring-0`}>
+    <div className={`flex items-center gap-2 ${isMobile ? "w-full" : ""}`}>
+      <div
+        className={`flex items-center rounded-md border ${isMobile ? "flex-1" : ""}`}
+      >
+        <Select
+          value={searchType}
+          onValueChange={(value: "material" | "author") => setSearchType(value)}
+        >
+          <SelectTrigger
+            className={`${isMobile ? "w-28" : "w-32"} border-0 border-r rounded-l-md rounded-r-none focus:ring-0`}
+          >
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -218,10 +235,10 @@ function NavbarContent() {
             <SelectItem value="author">Autores</SelectItem>
           </SelectContent>
         </Select>
-        <Input 
-          type="text" 
+        <Input
+          type="text"
           placeholder={getPlaceholderText()}
-          className={`${isMobile ? 'flex-1' : 'w-64 md:w-80'} border-0 rounded-l-none rounded-r-md focus-visible:ring-0`}
+          className={`${isMobile ? "flex-1" : "w-64 md:w-80"} border-0 rounded-l-none rounded-r-md focus-visible:ring-0`}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           onKeyPress={handleKeyPress}
@@ -239,9 +256,12 @@ function NavbarContent() {
         {/* Main navigation bar */}
         <div className="flex justify-between items-center">
           {/* Brand */}
-          <Link href="/" className="text-xl font-bold">
-            Repositorio ESCOM
-          </Link>
+          <div className="flex items-center gap-2">
+            <LibraryBig className="w-6 h-6" />
+            <Link href="/" className="text-xl font-bold">
+              Repositorio ESCOM
+            </Link>
+          </div>
 
           {/* Desktop Search - Hidden on mobile */}
           {shouldShowSearch && (
@@ -308,17 +328,15 @@ function NavbarContent() {
             {email && (
               <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
                 <SheetTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-9 w-9"
-                  >
+                  <Button variant="ghost" size="icon" className="h-9 w-9">
                     <Menu className="h-5 w-5" />
                   </Button>
                 </SheetTrigger>
                 <SheetContent side="right" className="w-80">
                   <div className="flex items-center justify-between mb-4">
-                    <SheetTitle className="text-lg font-semibold">Menú</SheetTitle>
+                    <SheetTitle className="text-lg font-semibold">
+                      Menú
+                    </SheetTitle>
                   </div>
                   <MobileUserMenu />
                 </SheetContent>
@@ -340,16 +358,18 @@ function NavbarContent() {
 
 export function Navbar() {
   return (
-    <Suspense fallback={
-      <nav className="w-full border-b bg-white sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-3 flex justify-between items-center">
-          <Link href="/" className="text-xl font-bold">
-            Repositorio ESCOM
-          </Link>
-          <div className="h-9 w-9" />
-        </div>
-      </nav>
-    }>
+    <Suspense
+      fallback={
+        <nav className="w-full border-b bg-white sticky top-0 z-50">
+          <div className="container mx-auto px-4 py-3 flex justify-between items-center">
+            <Link href="/" className="text-xl font-bold">
+              Repositorio ESCOM
+            </Link>
+            <div className="h-9 w-9" />
+          </div>
+        </nav>
+      }
+    >
       <NavbarContent />
     </Suspense>
   );

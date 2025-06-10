@@ -5,6 +5,7 @@ import { Toaster } from "sonner";
 
 import "./globals.css";
 import { Navbar } from "@/components/Navbar";
+import Footer from "@/components/Footer/Footer";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -30,6 +31,7 @@ export default function RootLayout({
         <AuthCheck>
           <div className="min-h-svh flex flex-col">{children}</div>
         </AuthCheck>
+        <Footer />
       </body>
     </html>
   );
