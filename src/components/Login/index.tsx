@@ -229,30 +229,6 @@ export function LoginForm({
             </div>
           </CardContent>
         </Card>
-
-        <div className="mt-8 text-center">
-          <div className="text-slate-500 text-xs text-balance">
-            Al continuar, aceptas nuestros{" "}
-            <Link
-              href="#"
-              className="text-blue-600 hover:text-blue-700 underline underline-offset-4"
-            >
-              Términos y Condiciones
-            </Link>{" "}
-            y{" "}
-            <Link
-              href="#"
-              className="text-blue-600 hover:text-blue-700 underline underline-offset-4"
-            >
-              Política de Privacidad
-            </Link>
-          </div>
-          <div className="mt-4 pt-4 border-t border-slate-200">
-            <p className="text-xs text-slate-400">
-              © 2025 Instituto Politécnico Nacional - ESCOM
-            </p>
-          </div>
-        </div>
       </div>
     </div>
   );
