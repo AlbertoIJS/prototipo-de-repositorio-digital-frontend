@@ -89,7 +89,20 @@ export default function EditMaterialForm({
   const [materialType, setMaterialType] = useState<"file" | "url">(
     material.tipoArchivo === "LINK" ? "url" : "file"
   );
-  const [url, setUrl] = useState(material.url || "");
+  
+  // Validate URL before pre-loading
+  const isValidUrl = (urlString: string): boolean => {
+    try {
+      new URL(urlString);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+  
+  const [url, setUrl] = useState(
+    material.url && isValidUrl(material.url) ? material.url : ""
+  );
   const [nombreMaterial, setNombreMaterial] = useState(material.nombre);
   const [materialStatus, setMaterialStatus] = useState(material.status);
   const [materialDisponible, setMaterialDisponible] = useState(material.disponible);

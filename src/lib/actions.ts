@@ -18,14 +18,14 @@ export type State = {
     archivo?: string[];
     url?: string[];
     materialType?: string[];
-    'autores.0.nombre'?: string[];
-    'autores.0.apellidoP'?: string[];
-    'autores.0.apellidoM'?: string[];
-    'autores.0.email'?: string[];
-    'autores.1.nombre'?: string[];
-    'autores.1.apellidoP'?: string[];
-    'autores.1.apellidoM'?: string[];
-    'autores.1.email'?: string[];
+    "autores.0.nombre"?: string[];
+    "autores.0.apellidoP"?: string[];
+    "autores.0.apellidoM"?: string[];
+    "autores.0.email"?: string[];
+    "autores.1.nombre"?: string[];
+    "autores.1.apellidoP"?: string[];
+    "autores.1.apellidoM"?: string[];
+    "autores.1.email"?: string[];
     // Add more author fields as needed
     [key: string]: string[] | undefined;
   };
@@ -48,37 +48,57 @@ export type UserState = {
 };
 
 const AutorSchema = z.object({
-  nombre: z.string()
+  nombre: z
+    .string()
     .min(1, "El nombre es requerido")
     .min(2, "El nombre debe tener al menos 2 caracteres")
     .max(50, "El nombre no puede exceder 50 caracteres")
-    .regex(/^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s]+$/, "El nombre solo puede contener letras"),
-  apellidoP: z.string()
+    .regex(
+      /^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s]+$/,
+      "El nombre solo puede contener letras"
+    ),
+  apellidoP: z
+    .string()
     .min(1, "El apellido paterno es requerido")
     .min(2, "El apellido paterno debe tener al menos 2 caracteres")
     .max(50, "El apellido paterno no puede exceder 50 caracteres")
-    .regex(/^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s]+$/, "El apellido paterno solo puede contener letras"),
-  apellidoM: z.string()
+    .regex(
+      /^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s]+$/,
+      "El apellido paterno solo puede contener letras"
+    ),
+  apellidoM: z
+    .string()
     .min(1, "El apellido materno es requerido")
     .min(2, "El apellido materno debe tener al menos 2 caracteres")
     .max(50, "El apellido materno no puede exceder 50 caracteres")
-    .regex(/^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s]+$/, "El apellido materno solo puede contener letras"),
-  email: z.string()
-    .min(1, "El email es requerido")
-    .email("El formato del email no es válido")
-    .max(100, "El email no puede exceder 100 caracteres"),
+    .regex(
+      /^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s]+$/,
+      "El apellido materno solo puede contener letras"
+    ),
+  email: z
+    .string()
+    .email({ message: "Correo inválido" })
+    .refine(
+      (val) => val.includes("@") && val.split("@")[1]?.includes("ipn.mx"),
+      {
+        message: "El correo debe ser del dominio ipn.mx",
+      }
+    ),
 });
 
 const MaterialSchema = z.object({
-  nombreMaterial: z.string()
+  nombreMaterial: z
+    .string()
     .min(1, "El nombre del material es requerido")
     .min(3, "El nombre debe tener al menos 3 caracteres")
     .max(200, "El nombre no puede exceder 200 caracteres")
     .trim(),
-  autores: z.array(AutorSchema)
+  autores: z
+    .array(AutorSchema)
     .min(1, "Se requiere al menos un autor")
     .max(10, "No se pueden agregar más de 10 autores"),
-  tagIds: z.array(z.number().positive("Los IDs de tags deben ser números positivos"))
+  tagIds: z
+    .array(z.number().positive("Los IDs de tags deben ser números positivos"))
     .min(1, "Se requiere al menos un tag")
     .max(15, "No se pueden seleccionar más de 15 tags"),
   materialType: z.enum(["file", "url"], {
@@ -94,7 +114,7 @@ export async function createMaterial(
   // Get user ID from JWT token
   const cookieStore = await cookies();
   const token = cookieStore.get("auth_token")?.value;
-  
+
   if (!token) {
     return {
       message: "Error: No se encontró token de autenticación",
@@ -150,10 +170,11 @@ export async function createMaterial(
 
   if (!validateFields.success) {
     const fieldErrors = validateFields.error.flatten().fieldErrors;
-    
+
     return {
       errors: fieldErrors,
-      message: "Error en los campos del formulario. Por favor, corrige los errores.",
+      message:
+        "Error en los campos del formulario. Por favor, corrige los errores.",
       status: 400,
     };
   }
@@ -169,7 +190,7 @@ export async function createMaterial(
         status: 400,
       };
     }
-    
+
     // Validate file type and size
     const allowedTypes = ["application/pdf", "application/zip"];
     if (!allowedTypes.includes(archivo.type)) {
@@ -181,7 +202,7 @@ export async function createMaterial(
         status: 400,
       };
     }
-    
+
     // Validate file size (max 50MB)
     const maxSize = 50 * 1024 * 1024; // 50MB in bytes
     if (archivo.size > maxSize) {
@@ -193,7 +214,6 @@ export async function createMaterial(
         status: 400,
       };
     }
-    
   } else if (materialType === "url") {
     if (!url || url.trim() === "") {
       return {
@@ -204,11 +224,11 @@ export async function createMaterial(
         status: 400,
       };
     }
-    
+
     // Enhanced URL validation
     try {
       const urlObj = new URL(url);
-      if (!['http:', 'https:'].includes(urlObj.protocol)) {
+      if (!["http:", "https:"].includes(urlObj.protocol)) {
         return {
           errors: {
             url: ["La URL debe usar protocolo HTTP o HTTPS"],
@@ -248,7 +268,7 @@ export async function createMaterial(
     });
 
     apiFormData.append("datosJson", datosJson);
-    
+
     // Add either file or URL based on materialType
     if (materialType === "file") {
       apiFormData.append("archivo", archivo);
@@ -256,7 +276,10 @@ export async function createMaterial(
     } else {
       apiFormData.append("Url", url);
       // Create an empty file when using URL
-      apiFormData.append("archivo", new File([], "", { type: "application/octet-stream" }));
+      apiFormData.append(
+        "archivo",
+        new File([], "", { type: "application/octet-stream" })
+      );
     }
 
     const response = await fetch(
@@ -301,7 +324,7 @@ export async function updateMaterial(
   // Get user ID from JWT token
   const cookieStore = await cookies();
   const token = cookieStore.get("auth_token")?.value;
-  
+
   if (!token) {
     return {
       message: "Error: No se encontró token de autenticación",
@@ -318,7 +341,10 @@ export async function updateMaterial(
   // For updates, both file and URL are optional - admins can modify either or both
   if (materialType === "file" && archivo && archivo.size > 0) {
     // Validate file if a new one is provided
-    if (archivo.type !== "application/pdf" && archivo.type !== "application/zip") {
+    if (
+      archivo.type !== "application/pdf" &&
+      archivo.type !== "application/zip"
+    ) {
       return {
         errors: {
           archivo: ["Solo se permiten archivos PDF y ZIP"],
@@ -383,15 +409,18 @@ export async function updateMaterial(
     });
 
     apiFormData.append("datosJson", datosJson);
-    
+
     // Handle file upload - always send nuevoArchivo field
     if (archivo && archivo.size > 0) {
       apiFormData.append("nuevoArchivo", archivo);
     } else {
       // Create an empty file to maintain the existing file
-      apiFormData.append("nuevoArchivo", new File([], "", { type: "application/octet-stream" }));
+      apiFormData.append(
+        "nuevoArchivo",
+        new File([], "", { type: "application/octet-stream" })
+      );
     }
-    
+
     // Handle URL - always send nuevaUrl field
     apiFormData.append("nuevaUrl", url || "");
 
@@ -403,7 +432,10 @@ export async function updateMaterial(
       }
     );
 
+    console.log(response);
+    
     const resjson = await response.json();
+    console.log(resjson);
 
     if (!response.ok) {
       throw new Error("Error al actualizar el material");
@@ -558,7 +590,6 @@ export async function removeMaterial(materialId: number) {
   }
 }
 
-
 export async function removeFromFavorites(userId: string, materialId: number) {
   const userID = Number(userId);
   try {
@@ -586,7 +617,10 @@ export async function removeFromFavorites(userId: string, materialId: number) {
   }
 }
 
-export async function updateMaterialAvailability(materialId: string, disponible: number) {
+export async function updateMaterialAvailability(
+  materialId: string,
+  disponible: number
+) {
   try {
     const response = await fetch(
       `${process.env.NEXT_PUBLIC_API_URL}/Materiales/disponibilidad?materialId=${materialId}`,
@@ -606,9 +640,12 @@ export async function updateMaterialAvailability(materialId: string, disponible:
     revalidatePath(`/material/${materialId}`);
     revalidatePath("/mis-materiales");
     revalidatePath("/admin/materiales");
-    
+
     return {
-      message: disponible === 1 ? "Material marcado como disponible" : "Material marcado como no disponible",
+      message:
+        disponible === 1
+          ? "Material marcado como disponible"
+          : "Material marcado como no disponible",
       status: response.status,
     };
   } catch (error) {
@@ -639,7 +676,7 @@ export async function updateMaterialStatus(materialId: string, status: number) {
     revalidatePath(`/material/${materialId}`);
     revalidatePath("/mis-materiales");
     revalidatePath("/admin/materiales");
-    
+
     return {
       message: status === 1 ? "Material activado" : "Material desactivado",
       status: response.status,
