@@ -21,7 +21,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Search, User, Menu, LibraryBig } from "lucide-react";
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useState, Suspense, useMemo, useRef, useCallback } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { jwtDecode } from "jwt-decode";
 import Link from "next/link";
@@ -44,20 +44,21 @@ function NavbarContent() {
   );
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showMobileSearch, setShowMobileSearch] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const mobileSearchInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  // Initialize search query and type from URL params
-  useEffect(() => {
-    const query = searchParams.get("q") || "";
-    const type =
-      (searchParams.get("searchType") as "material" | "author") || "material";
-    setSearchQuery(query);
-    setSearchType(type);
-  }, [searchParams]);
+  // Memoize placeholder text to prevent unnecessary re-renders
+  const getPlaceholderText = useMemo(() => {
+    return searchType === "material"
+      ? "Buscar materiales..."
+      : "Buscar autores...";
+  }, [searchType]);
 
-  function handleSearch() {
+  // Memoized functions to prevent recreation on every render
+  const handleSearch = useCallback(() => {
     const params = new URLSearchParams(searchParams);
 
     // Update or remove the search query
@@ -78,13 +79,21 @@ function NavbarContent() {
 
     // Close mobile search on submit
     setShowMobileSearch(false);
-  }
+  }, [searchParams, searchQuery, searchType, pathname, router, setShowMobileSearch]);
 
-  function handleKeyPress(e: React.KeyboardEvent) {
-    if (e.key === "Enter") {
-      handleSearch();
-    }
-  }
+  const handleSubmit = useCallback((e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    handleSearch();
+  }, [handleSearch]);
+
+  // Initialize search query and type from URL params
+  useEffect(() => {
+    const query = searchParams.get("q") || "";
+    const type =
+      (searchParams.get("searchType") as "material" | "author") || "material";
+    setSearchQuery(query);
+    setSearchType(type);
+  }, [searchParams]);
 
   function handleSignOut() {
     console.log("=== SIGNING OUT ===");
@@ -209,12 +218,6 @@ function NavbarContent() {
     );
   }
 
-  const getPlaceholderText = () => {
-    return searchType === "material"
-      ? "Buscar materiales..."
-      : "Buscar autores...";
-  };
-
   const shouldShowSearch = pathname === "/" || searchQuery;
 
   // Role-based permissions
@@ -275,41 +278,6 @@ function NavbarContent() {
     </div>
   );
 
-  // Search Component
-  const SearchComponent = ({ isMobile = false }: { isMobile?: boolean }) => (
-    <div className={`flex items-center gap-2 ${isMobile ? "w-full" : ""}`}>
-      <div
-        className={`flex items-center rounded-md border ${isMobile ? "flex-1" : ""}`}
-      >
-        <Select
-          value={searchType}
-          onValueChange={(value: "material" | "author") => setSearchType(value)}
-        >
-          <SelectTrigger
-            className={`${isMobile ? "w-28" : "w-32"} border-0 border-r rounded-l-md rounded-r-none focus:ring-0`}
-          >
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="material">Materiales</SelectItem>
-            <SelectItem value="author">Autores</SelectItem>
-          </SelectContent>
-        </Select>
-        <Input
-          type="text"
-          placeholder={getPlaceholderText()}
-          className={`${isMobile ? "flex-1" : "w-64 md:w-80"} border-0 rounded-l-none rounded-r-md focus-visible:ring-0`}
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          onKeyPress={handleKeyPress}
-        />
-      </div>
-      <Button variant="outline" size="icon" onClick={handleSearch}>
-        <Search className="h-4 w-4" />
-      </Button>
-    </div>
-  );
-
   return (
     <nav className="w-full border-b bg-white sticky top-0 z-50">
       <div className="container mx-auto px-4 py-3">
@@ -326,7 +294,34 @@ function NavbarContent() {
           {/* Desktop Search - Hidden on mobile */}
           {shouldShowSearch && (
             <div className="hidden md:flex">
-              <SearchComponent />
+              <form onSubmit={handleSubmit} className="flex items-center gap-2">
+                <div className="flex items-center rounded-md border">
+                  <Select
+                    value={searchType}
+                    onValueChange={(value: "material" | "author") => setSearchType(value)}
+                  >
+                    <SelectTrigger className="w-32 border-0 border-r rounded-l-md rounded-r-none focus:ring-0">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="material">Materiales</SelectItem>
+                      <SelectItem value="author">Autores</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Input
+                    ref={searchInputRef}
+                    type="text"
+                    placeholder={getPlaceholderText}
+                    className="w-64 md:w-80 border-0 rounded-l-none rounded-r-md focus-visible:ring-0"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    autoComplete="off"
+                  />
+                </div>
+                <Button type="submit" variant="outline" size="icon">
+                  <Search className="h-4 w-4" />
+                </Button>
+              </form>
             </div>
           )}
 
@@ -424,7 +419,34 @@ function NavbarContent() {
         {/* Mobile Search Bar - Shows when search button is clicked */}
         {shouldShowSearch && showMobileSearch && (
           <div className="md:hidden mt-3 pt-3 border-t">
-            <SearchComponent isMobile />
+            <form onSubmit={handleSubmit} className="flex items-center gap-2 w-full">
+              <div className="flex items-center rounded-md border flex-1">
+                <Select
+                  value={searchType}
+                  onValueChange={(value: "material" | "author") => setSearchType(value)}
+                >
+                  <SelectTrigger className="w-28 border-0 border-r rounded-l-md rounded-r-none focus:ring-0">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="material">Materiales</SelectItem>
+                    <SelectItem value="author">Autores</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Input
+                  ref={mobileSearchInputRef}
+                  type="text"
+                  placeholder={getPlaceholderText}
+                  className="flex-1 border-0 rounded-l-none rounded-r-md focus-visible:ring-0"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  autoComplete="off"
+                />
+              </div>
+              <Button type="submit" variant="outline" size="icon">
+                <Search className="h-4 w-4" />
+              </Button>
+            </form>
           </div>
         )}
       </div>
