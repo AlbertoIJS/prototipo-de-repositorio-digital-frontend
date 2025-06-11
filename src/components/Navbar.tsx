@@ -225,6 +225,15 @@ function NavbarContent() {
   const MobileUserMenu = () => (
     <div className="flex flex-col space-y-2 p-4 border-t">
       <div className="text-sm text-gray-600 pb-2">{email}</div>
+
+      {/* Historial - Available for all roles (students, professors, admins) */}
+      <Link
+        href="/historial"
+        className="block px-3 py-2 text-sm hover:bg-gray-100 rounded-md"
+        onClick={() => setIsMobileMenuOpen(false)}
+      >
+        Mi historial
+      </Link>
       
       {/* Favoritos - Available for all roles (students, professors, admins) */}
       <Link
@@ -339,6 +348,10 @@ function NavbarContent() {
                 <DropdownMenuContent align="end" className="w-56">
                   <DropdownMenuItem disabled className="flex-col items-start">
                     {email}
+                  </DropdownMenuItem>
+                  {/* Historial - Available for all roles (students, professors, admins) */}
+                  <DropdownMenuItem asChild className="flex-col items-start">
+                    <Link href="/historial">Mi historial</Link>
                   </DropdownMenuItem>
                   
                   {/* Favoritos - Available for all roles (students, professors, admins) */}

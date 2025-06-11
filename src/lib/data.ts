@@ -262,6 +262,56 @@ export async function fetchUsers() {
   }
 }
 
+export async function fetchUserHistory(userID: string) {
+  try {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/Historial/${userID}`
+    );
+    const data = await res.json();
+    return data;
+  } catch (error) {
+    console.error("Error in fetchUserHistory:", error);
+    return {
+      ok: false,
+      data: [],
+      message: "Error fetching history",
+      errors: error
+    };
+  }
+}
+
+export async function removeHistory(userID: string) {
+  try {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/Historial/${userID}`,
+      {
+        method: "DELETE",
+      }
+    );
+    const data = await res.json();
+    return data;
+  } catch (error) {
+    console.error("Error in removeHistory:", error);
+    return [];
+  }
+}
+
+export async function removeOneFromHistory(userID: string, materialId: string) {
+  try {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/Historial/${userID}/material/${materialId}`,
+      {
+        method: "DELETE",
+      }
+    );
+    const data = await res.json();
+    return data;
+  } catch (error) {
+    console.error("Error in removeOneFromHistory:", error);
+    return [];
+  }
+}
+
 export async function deleteUser(userID: string | number) {
   try {
     const res = await fetch(
