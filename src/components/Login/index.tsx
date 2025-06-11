@@ -60,8 +60,6 @@ export function LoginForm({
       email: data.email,
     });
 
-    console.log(res);
-
     if (res.ok) {
       localStorage.setItem("userID", res.data.data.id);
       router.push("/verificar");

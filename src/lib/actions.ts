@@ -404,7 +404,6 @@ export async function updateMaterial(
     );
 
     const resjson = await response.json();
-    console.log(resjson);
 
     if (!response.ok) {
       throw new Error("Error al actualizar el material");
