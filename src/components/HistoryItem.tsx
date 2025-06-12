@@ -5,7 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { formatDate } from "@/lib/utils";
 import { Trash2, ExternalLink, Calendar } from "lucide-react";
 import { removeOneFromHistory } from "@/lib/data";
 import { HistoryMaterial } from "@/lib/types";
@@ -50,7 +49,7 @@ export default function HistoryItem({ material, userID, onRemove }: HistoryItemP
     <Card className="hover:shadow-lg transition-shadow">
       <CardHeader>
         <CardTitle className="flex justify-between items-start gap-4">
-          <span className="text-lg font-semibold truncate flex-1">{material.nombre}</span>
+          <span className="text-lg font-semibold truncate flex-1 max-w-[25ch] md:max-w-[20ch]">{material.nombre}</span>
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button
@@ -83,8 +82,8 @@ export default function HistoryItem({ material, userID, onRemove }: HistoryItemP
           </AlertDialog>
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-3">
+      <CardContent className="h-full">
+        <div className="flex flex-col space-y-3 w-full h-full">
           {/* File type and visit date */}
           <div className="flex items-center justify-between text-sm">
             <Badge variant="outline" className="text-xs">
@@ -126,7 +125,7 @@ export default function HistoryItem({ material, userID, onRemove }: HistoryItemP
           )}
 
           {/* Action button */}
-          <div className="pt-2">
+          <div className="pt-2 mt-auto">
             <Button asChild size="sm" className="w-full">
               <Link
                 href={`/material/${material.id}`}
