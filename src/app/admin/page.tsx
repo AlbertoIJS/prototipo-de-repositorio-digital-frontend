@@ -100,11 +100,11 @@ function QuickActions() {
         <CardDescription>Operaciones administrativas comunes</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="flex flex-col md:flex-row gap-3">
           {actions.map((action, index) => (
             <Link
               key={index}
-              className={`flex items-center space-x-2 p-3 rounded-lg border ${action.bg} cursor-pointer transition-colors`}
+              className={`flex items-center space-x-2 p-3 rounded-lg border ${action.bg} cursor-pointer transition-colors w-full`}
               href={action.href}
             >
               <action.icon className={`h-5 w-5 ${action.color}`} />
@@ -128,11 +128,12 @@ export default async function Admin() {
           <h1 className="text-3xl font-bold tracking-tight">
             Panel de Administración
           </h1>
-          <CSVReportGenerator analyticsData={analyticsData} />
+          <div className="hidden md:block"><CSVReportGenerator analyticsData={analyticsData} /></div>
         </div>
         <p className="text-muted-foreground">
           Gestiona y monitorea el repositorio de materiales académicos
         </p>
+          <div className="md:hidden w-full mt-4 mb-8"><CSVReportGenerator analyticsData={analyticsData} /></div>
       </div>
 
       {/* PDF Content - Everything below header */}
