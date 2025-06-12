@@ -44,13 +44,41 @@ const FormSchema = z.object({
   }),
   studentId: z
     .string()
-    .min(10, { message: "La boleta debe tener 10 caracteres" })
-    .max(10, { message: "La boleta debe tener 10 caracteres" })
-    .refine((val) => val.length >= 5 && val[4] === "6", {
-      message: "Boleta de no válida",
-    })
-    .refine((val) => val.length >= 6 && val[5] === "3", {
-      message: "Boleta de no válida",
+    .optional()
+    .refine((val, ctx) => {
+      const email = ctx.parent.email;
+      // If email contains "@alumno.ipn.mx", studentId is required
+      if (email && email.includes("@alumno.ipn.mx")) {
+        if (!val || val.length === 0) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "La boleta es requerida para estudiantes",
+          });
+          return false;
+        }
+        if (val.length !== 10) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "La boleta debe tener 10 caracteres",
+          });
+          return false;
+        }
+        if (val.length >= 5 && val[4] !== "6") {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Boleta no válida",
+          });
+          return false;
+        }
+        if (val.length >= 6 && val[5] !== "3") {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Boleta no válida",
+          });
+          return false;
+        }
+      }
+      return true;
     }),
 });
 
@@ -72,6 +100,10 @@ export function SignupForm({
   });
 
   const router = useRouter();
+
+  // Watch the email field to determine if studentId should be shown
+  const emailValue = form.watch("email");
+  const shouldShowStudentId = emailValue && emailValue.includes("@alumno.ipn.mx");
 
   async function onSubmit(data: z.infer<typeof FormSchema>) {
     setError(null);
@@ -137,7 +169,7 @@ export function SignupForm({
                 )}
 
                 {/* Email and Student ID Row */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className={cn("grid gap-4", shouldShowStudentId ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1")}>
                   <FormField
                     control={form.control}
                     name="email"
@@ -166,32 +198,34 @@ export function SignupForm({
                     )}
                   />
 
-                  <FormField
-                    control={form.control}
-                    name="studentId"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-slate-700 font-medium">
-                          Número de Boleta
-                        </FormLabel>
-                        <FormControl>
-                          <div className="relative">
-                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                              <svg className="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                              </svg>
+                  {shouldShowStudentId && (
+                    <FormField
+                      control={form.control}
+                      name="studentId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-slate-700 font-medium">
+                            Número de Boleta
+                          </FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <svg className="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                              </div>
+                              <Input
+                                placeholder="2020630001"
+                                className="pl-10 h-12 bg-slate-50 border-slate-200 focus:border-blue-500 focus:ring-blue-500"
+                                {...field}
+                              />
                             </div>
-                            <Input
-                              placeholder="2020630001"
-                              className="pl-10 h-12 bg-slate-50 border-slate-200 focus:border-blue-500 focus:ring-blue-500"
-                              {...field}
-                            />
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
                 </div>
 
                 {/* Name Field */}
