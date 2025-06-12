@@ -152,7 +152,7 @@ export default function CSVReportGenerator({
   };
 
   return (
-    <Button onClick={generateCSV} disabled={isGenerating}>
+    <Button onClick={generateCSV} disabled={isGenerating} className="w-full md:w-fit">
       <FileDown className="h-4 w-4 mr-2" />
       {isGenerating ? "Generando..." : "Generar reporte CSV"}
     </Button>
