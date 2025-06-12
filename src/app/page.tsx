@@ -422,8 +422,7 @@ function HomeContent() {
               </h1>
               <p className="text-lg lg:text-xl mb-6 text-blue-100">
                 Descubre una amplia colección de materiales educativos, recursos
-                de aprendizaje y contenido académico creado por tus profesores
-                para potenciar tu educación.
+                de aprendizaje y contenido académico creado por tus profesores.
               </p>
             </div>
             <div className="flex-shrink-0 rounded-lg bg-white">
