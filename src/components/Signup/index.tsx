@@ -35,51 +35,42 @@ const FormSchema = z.object({
     }),
   name: z
     .string()
-    .min(3, { message: "El nombre debe tener al menos 3 caracteres" }),
+    .min(3, { message: "El nombre debe tener al menos 3 caracteres" })
+    .refine((val) => !/\d/.test(val), {
+      message: "El nombre no puede contener números",
+    }),
   paternalLastName: z.string().min(3, {
     message: "El apellido paterno debe tener al menos 3 caracteres",
+  }).refine((val) => !/\d/.test(val), {
+    message: "El apellido paterno no puede contener números",
   }),
   maternalLastName: z.string().min(3, {
     message: "El apellido materno debe tener al menos 3 caracteres",
+  }).refine((val) => !/\d/.test(val), {
+    message: "El apellido materno no puede contener números",
   }),
-  studentId: z
-    .string()
-    .optional()
-    .refine((val, ctx) => {
-      const email = ctx.parent.email;
-      // If email contains "@alumno.ipn.mx", studentId is required
-      if (email && email.includes("@alumno.ipn.mx")) {
-        if (!val || val.length === 0) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: "La boleta es requerida para estudiantes",
-          });
-          return false;
-        }
-        if (val.length !== 10) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: "La boleta debe tener 10 caracteres",
-          });
-          return false;
-        }
-        if (val.length >= 5 && val[4] !== "6") {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: "Boleta no válida",
-          });
-          return false;
-        }
-        if (val.length >= 6 && val[5] !== "3") {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: "Boleta no válida",
-          });
-          return false;
-        }
+  studentId: z.string().optional(),
+}).superRefine((data, ctx) => {
+  // If email contains "@alumno.ipn.mx", studentId is required with validation
+  if (data.email && data.email.includes("@alumno.ipn.mx")) {
+    if (!data.studentId || data.studentId.length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "La boleta es requerida para estudiantes",
+        path: ["studentId"],
+      });
+    } else {
+      // Validate studentId with regex ^20(\d{2})63\d{4}$
+      const studentIdRegex = /^20(\d{2})63\d{4}$/;
+      if (!studentIdRegex.test(data.studentId)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Formato de boleta inválido",
+          path: ["studentId"],
+        });
       }
-      return true;
-    }),
+    }
+  }
 });
 
 export function SignupForm({

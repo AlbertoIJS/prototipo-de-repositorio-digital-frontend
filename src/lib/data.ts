@@ -19,9 +19,27 @@ export async function signup({
   name: string;
   paternalLastName: string;
   maternalLastName: string;
-  studentId: string;
+  studentId?: string;
 }) {
   try {
+    const requestBody: {
+      email: string;
+      nombre: string;
+      apellidoP: string;
+      apellidoM: string;
+      boleta?: string;
+    } = {
+      email,
+      nombre: name,
+      apellidoP: paternalLastName,
+      apellidoM: maternalLastName,
+    };
+
+    // Only include boleta if studentId is provided
+    if (studentId) {
+      requestBody.boleta = studentId;
+    }
+
     const res = await fetch(
       `${process.env.NEXT_PUBLIC_API_URL}/usuarios/signup`,
       {
@@ -29,13 +47,7 @@ export async function signup({
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          email,
-          nombre: name,
-          apellidoP: paternalLastName,
-          apellidoM: maternalLastName,
-          boleta: studentId,
-        }),
+        body: JSON.stringify(requestBody),
       }
     );
     const data = await res.json();
