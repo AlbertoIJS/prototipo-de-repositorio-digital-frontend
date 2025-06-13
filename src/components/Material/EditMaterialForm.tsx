@@ -378,6 +378,8 @@ export default function EditMaterialForm({
                 onCheckedChange={(checked) => {
                   if (checked) {
                     setMaterialType("file");
+                    // Clear URL when switching to file type
+                    setUrl("");
                   }
                 }}
               />
