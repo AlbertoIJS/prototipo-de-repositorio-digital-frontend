@@ -3,6 +3,7 @@
 import { cookies } from "next/headers";
 import { jwtDecode } from "jwt-decode";
 import { revalidateTag } from "next/cache";
+import { redirect } from "next/navigation";
 
 interface JWTPayload {
   id: string;
@@ -226,13 +227,25 @@ export async function fetchMaterial(id: string) {
     const response = await fetch(
       `${process.env.NEXT_PUBLIC_API_URL}/Materiales/${id}/Detalles?userId=${userID}`
     );
+
     if (!response.ok) {
-      throw new Error("Failed to fetch material");
+      if (response.status === 404) {
+        // Handle 404 outside try/catch as per Next.js best practices
+        console.log("Material not found, redirecting to home");
+      }
+      throw new Error(`Failed to fetch material: ${response.status}`);
     }
+    
     const data = await response.json();
     return data;
   } catch (error) {
     console.error("Error in fetchMaterial:", error);
+    
+    // Check if this is a 404 error and redirect accordingly
+    if (error instanceof Error && error.message.includes("404")) {
+      redirect("/");
+    }
+    
     return null;
   }
 }
