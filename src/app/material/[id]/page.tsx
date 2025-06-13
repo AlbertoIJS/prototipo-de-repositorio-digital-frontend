@@ -55,7 +55,8 @@ export default async function MaterialPage({
             <div className="space-y-2">
               {material.autores.map((autor) => (
                 <div key={autor.id} className="text-sm">
-                  {autor.nombre} {autor.apellidoP} {autor.apellidoM} - {autor.email}
+                  {autor.nombre} {autor.apellidoP} {autor.apellidoM} -{" "}
+                  {autor.email}
                 </div>
               ))}
             </div>
@@ -72,8 +73,8 @@ export default async function MaterialPage({
             </div>
           </div>
 
-          <div>
-            <h3 className="text-lg font-semibold mb-4">Vista previa</h3>
+          <div className="-mx-6 md:-mx-0">
+            <h3 className="text-lg font-semibold mb-4 pl-6 md:p-0">Vista previa</h3>
             <MaterialViewer
               materialType={material.tipoArchivo}
               materialUrl={material.url}
