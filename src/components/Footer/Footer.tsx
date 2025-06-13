@@ -29,7 +29,7 @@ export default function Footer() {
               <div>
                 <h4 className="font-bold mb-2">Alumnos</h4>
                 <ul className="flex flex-col gap-2 text-sm text-gray-500">
-                  <li>Alberto Isaac Jurado Santos</li>
+                  <li>Jurado Santos Alberto Isaac</li>
                   <li>Ávila Juárez Alexis Aramis</li>
                   <li>Gutiérrez Victorio Axel Jair</li>
                 </ul>
@@ -37,7 +37,7 @@ export default function Footer() {
               <div>
                 <h4 className="font-bold mb-2">Director</h4>
                 <ul className="flex flex-col gap-2 text-sm text-gray-500">
-                  <li>Israel Salas Ramírez</li>
+                  <li>Salas Ramírez Israel</li>
                 </ul>
               </div>
             </div>
