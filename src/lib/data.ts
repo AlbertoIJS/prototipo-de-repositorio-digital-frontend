@@ -2,6 +2,7 @@
 
 import { cookies } from "next/headers";
 import { jwtDecode } from "jwt-decode";
+import { revalidateTag } from "next/cache";
 
 interface JWTPayload {
   id: string;
@@ -52,6 +53,8 @@ export async function signup({
     );
     const data = await res.json();
     if (res.ok) {
+      // Revalidate users cache when a new user signs up
+      revalidateTag('users');
       return {
         ok: true,
         data,
@@ -265,7 +268,10 @@ export async function fetchUser(id: string) {
 
 export async function fetchUsers() {
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/usuarios`);
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/usuarios`, {
+      cache: 'no-store',
+      next: { tags: ['users'] }
+    });
     const data = await res.json();
     return data;
   } catch (error) {
@@ -333,6 +339,12 @@ export async function deleteUser(userID: string | number) {
       }
     );
     const data = await res.json();
+    
+    if (res.ok) {
+      // Revalidate users cache when a user is deleted
+      revalidateTag('users');
+    }
+    
     return data;
   } catch (error) {
     console.error("Error in deleteUser:", error);

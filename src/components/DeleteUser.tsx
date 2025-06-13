@@ -14,12 +14,37 @@ import {
 import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { deleteUser } from "@/lib/data";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { toast } from "sonner";
 
 export default function DeleteUser({ userID }: { userID: string | number }) {
+  const router = useRouter();
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    try {
+      const result = await deleteUser(userID);
+      if (result.ok) {
+        toast.success("Usuario eliminado exitosamente");
+        // Refresh the page to show updated data
+        router.refresh();
+      } else {
+        toast.error("Error al eliminar el usuario");
+      }
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      toast.error("Error al eliminar el usuario");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button variant="ghost" size="icon">
+        <Button variant="ghost" size="icon" disabled={isDeleting}>
           <Trash2 />
         </Button>
       </AlertDialogTrigger>
@@ -32,12 +57,13 @@ export default function DeleteUser({ userID }: { userID: string | number }) {
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
           <AlertDialogAction
-            onClick={() => deleteUser(userID)}
+            onClick={handleDelete}
             className="bg-red-500 hover:bg-red-600"
+            disabled={isDeleting}
           >
-            Eliminar
+            {isDeleting ? "Eliminando..." : "Eliminar"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

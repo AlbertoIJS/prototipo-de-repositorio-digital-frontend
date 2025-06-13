@@ -12,6 +12,11 @@ import { Pencil } from "lucide-react";
 import DeleteUser from "@/components/DeleteUser";
 import Link from "next/link";
 
+// Force dynamic rendering to ensure fresh data on every request
+export const dynamic = 'force-dynamic';
+// Disable caching for this route
+export const revalidate = 0;
+
 export default async function UsuariosPage() {
   const users = await fetchUsers();
 

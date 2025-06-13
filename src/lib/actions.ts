@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { z } from "zod";
 import { cookies } from "next/headers";
 import { jwtDecode } from "jwt-decode";
@@ -552,6 +552,7 @@ export async function updateUser(
     }
 
     revalidatePath("/admin/usuarios");
+    revalidateTag('users');
     return {
       message: "Usuario actualizado exitosamente",
       status: 200,
