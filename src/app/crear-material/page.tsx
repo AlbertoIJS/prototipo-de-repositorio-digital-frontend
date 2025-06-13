@@ -136,7 +136,15 @@ export default function CreateMaterial() {
       // If we don't have a selectedFile but the input has a file, update selectedFile
       else if (!selectedFile && fileInput.files?.length) {
         const file = fileInput.files[0];
-        if (file.type === "application/pdf" || file.type === "application/zip") {
+        // Accept PDF and various ZIP MIME types (Windows compatibility)
+        const allowedTypes = [
+          "application/pdf",
+          "application/zip",
+          "application/x-zip-compressed",
+          "application/x-zip"
+        ];
+        
+        if (allowedTypes.includes(file.type)) {
           setSelectedFile(file);
         }
       }
@@ -182,7 +190,14 @@ export default function CreateMaterial() {
       if (!selectedFile) {
         errors.archivo = "Se requiere un archivo";
       } else {
-        const allowedTypes = ["application/pdf", "application/zip"];
+        // Accept PDF and various ZIP MIME types (Windows compatibility)
+        const allowedTypes = [
+          "application/pdf",
+          "application/zip",
+          "application/x-zip-compressed",
+          "application/x-zip"
+        ];
+        
         if (!allowedTypes.includes(selectedFile.type)) {
           errors.archivo = "Solo se permiten archivos PDF y ZIP";
         }
@@ -233,7 +248,15 @@ export default function CreateMaterial() {
           setSelectedFile(null);
         } else if (fileInput.files?.length && !selectedFile) {
           const file = fileInput.files[0];
-          if (file.type === "application/pdf" || file.type === "application/zip") {
+          // Accept PDF and various ZIP MIME types (Windows compatibility)
+          const allowedTypes = [
+            "application/pdf",
+            "application/zip",
+            "application/x-zip-compressed",
+            "application/x-zip"
+          ];
+          
+          if (allowedTypes.includes(file.type)) {
             setSelectedFile(file);
           }
         }
@@ -282,7 +305,15 @@ export default function CreateMaterial() {
     const files = event.target.files;
     if (files && files.length > 0) {
       const file = files[0];
-      if (file.type === "application/pdf" || file.type === "application/zip") {
+      // Accept PDF and various ZIP MIME types (Windows compatibility)
+      const allowedTypes = [
+        "application/pdf",
+        "application/zip",
+        "application/x-zip-compressed",
+        "application/x-zip"
+      ];
+      
+      if (allowedTypes.includes(file.type)) {
         setSelectedFile(file);
 
         // Update the file input's files
@@ -612,7 +643,7 @@ export default function CreateMaterial() {
                   id="file-upload"
                   name="archivo"
                   className="hidden"
-                  accept=".pdf,.zip"
+                  accept=".pdf,.zip,application/pdf,application/zip,application/x-zip-compressed,application/x-zip"
                   onChange={(e) => {
                     handleFileChange(e);
                     // Clear client error on change

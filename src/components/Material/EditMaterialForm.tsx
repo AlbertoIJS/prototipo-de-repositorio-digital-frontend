@@ -164,7 +164,15 @@ export default function EditMaterialForm({
     const files = event.target.files;
     if (files && files.length > 0) {
       const file = files[0];
-      if (file.type === "application/pdf" || file.type === "application/zip") {
+      // Accept PDF and various ZIP MIME types (Windows compatibility)
+      const allowedTypes = [
+        "application/pdf",
+        "application/zip",
+        "application/x-zip-compressed",
+        "application/x-zip"
+      ];
+      
+      if (allowedTypes.includes(file.type)) {
         setSelectedFile(file);
 
         // Update the file input's files
@@ -433,7 +441,7 @@ export default function EditMaterialForm({
                     id="file-upload"
                     name="archivo"
                     className="hidden"
-                    accept=".pdf,.zip"
+                    accept=".pdf,.zip,application/pdf,application/zip,application/x-zip-compressed,application/x-zip"
                     onChange={handleFileChange}
                   />
                   <span className="text-sm text-muted-foreground">
@@ -542,7 +550,7 @@ export default function EditMaterialForm({
                     id="file-upload"
                     name="archivo"
                     className="hidden"
-                    accept=".pdf,.zip"
+                    accept=".pdf,.zip,application/pdf,application/zip,application/x-zip-compressed,application/x-zip"
                     onChange={handleFileChange}
                   />
                   <span className="text-sm text-muted-foreground">
