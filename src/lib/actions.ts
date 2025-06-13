@@ -192,7 +192,13 @@ export async function createMaterial(
     }
 
     // Validate file type and size
-    const allowedTypes = ["application/pdf", "application/zip"];
+    // Accept PDF and various ZIP MIME types (Windows compatibility)
+    const allowedTypes = [
+      "application/pdf",
+      "application/zip",
+      "application/x-zip-compressed",
+      "application/x-zip"
+    ];
     if (!allowedTypes.includes(archivo.type)) {
       return {
         errors: {
@@ -341,10 +347,15 @@ export async function updateMaterial(
   // For updates, both file and URL are optional - admins can modify either or both
   if (materialType === "file" && archivo && archivo.size > 0) {
     // Validate file if a new one is provided
-    if (
-      archivo.type !== "application/pdf" &&
-      archivo.type !== "application/zip"
-    ) {
+    // Accept PDF and various ZIP MIME types (Windows compatibility)
+    const allowedTypes = [
+      "application/pdf",
+      "application/zip",
+      "application/x-zip-compressed",
+      "application/x-zip"
+    ];
+    
+    if (!allowedTypes.includes(archivo.type)) {
       return {
         errors: {
           archivo: ["Solo se permiten archivos PDF y ZIP"],

@@ -410,8 +410,7 @@ export default function EditMaterialForm({
         </div>
 
         {/* Conditional Material Input */}
-        {isAdmin ? (
-          // Admin view: Show both file and URL fields regardless of material type
+        {isAdmin && materialType === "file" ? (
           <>
             <div data-slot="form-item" className="grid gap-2">
               <Label
